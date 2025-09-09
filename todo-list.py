@@ -17,9 +17,9 @@ from gi.repository import Gtk, Adw, Gio, GLib, Pango, Gdk
 
 # Configuración de internacionalización
 LOCALE_DIR = os.path.join(os.path.dirname(__file__), "locale")
-DOMAIN = "task-manager"
+DOMAIN = "todo-list"
 
-CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "task-manager")
+CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "todo-list")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 DATA_FILE = os.path.join(CONFIG_DIR, "tasks.json")
 
@@ -436,7 +436,7 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
 
         self.ensure_inbox_project()
         self.apply_saved_config()
-        self.set_title(_("Task Manager"))
+        self.set_title(_("Todo List"))
         
         window_width = self.config.get("window_width", 1200)
         window_height = self.config.get("window_height", 800)
@@ -499,7 +499,7 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
     def recreate_ui(self):
         """Recrear la interfaz con los textos actualizados"""
         # Actualizar título de ventana
-        self.set_title(_("Task Manager"))
+        self.set_title(_("Todo List"))
         
         # Actualizar tooltips y textos de la interfaz
         self.new_list_btn.set_label(_("Add Project"))
@@ -1831,6 +1831,29 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
             border-radius: 0px;
             border: none;
         }
+
+        .date-header {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .date-header-past {
+            color: #dc2626;
+            font-weight: bold;
+            opacity: 1;
+        }
+
+        .date-header-today {
+            color: #2563eb;
+            font-weight: bold;
+            opacity: 1;
+        }
+
+        .date-header-future {
+            color: #16a34a;
+            font-weight: bold;
+            opacity: 1;
+        }        
         
         adw-action-row {
             min-height: 44px;
@@ -2163,7 +2186,7 @@ class TaskManagerApplication(Adw.Application):
         about_dialog = Adw.AboutWindow()
         about_dialog.set_transient_for(self.win)
         about_dialog.set_modal(True)
-        about_dialog.set_application_name(_("Task Manager"))
+        about_dialog.set_application_name(_("Todo List"))
         about_dialog.set_version("1.0.0")
         about_dialog.set_developer_name("pabmartine")
         about_dialog.set_copyright("© 2025")
