@@ -1,0 +1,212 @@
+# Spanish translation for Task Manager
+# Copyright (C) 2025
+# This file is distributed under the same license as the Task Manager package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Task Manager 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-01 12:00+0000\n"
+"PO-Revision-Date: 2025-01-01 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Today"
+msgstr "Hoy"
+
+msgid "Next 7 days"
+msgstr "Próximos 7 días"
+
+msgid "All"
+msgstr "Todas"
+
+msgid "Overdue"
+msgstr "Vencidas"
+
+msgid "Favorites"
+msgstr "Favoritas"
+
+msgid "Archived"
+msgstr "Archivadas"
+
+msgid "Inbox"
+msgstr "Bandeja de entrada"
+
+msgid "Task Manager"
+msgstr "Gestor de Tareas"
+
+msgid "Add Project"
+msgstr "Añadir Proyecto"
+
+msgid "Auto-detect"
+msgstr "Detectar automáticamente"
+
+msgid "English"
+msgstr "Inglés"
+
+msgid "Spanish"
+msgstr "Español"
+
+msgid "Language"
+msgstr "Idioma"
+
+msgid "Preferences"
+msgstr "Preferencias"
+
+msgid "About"
+msgstr "Acerca de"
+
+msgid "Projects"
+msgstr "Proyectos"
+
+msgid "New task..."
+msgstr "Nueva tarea..."
+
+msgid "Sort by date: oldest first"
+msgstr "Ordenar por fecha: más antiguas primero"
+
+msgid "Sort by date: newest first"
+msgstr "Ordenar por fecha: más recientes primero"
+
+msgid "Clear all archived tasks"
+msgstr "Limpiar todas las tareas archivadas"
+
+msgid "Team meeting"
+msgstr "Reunión de equipo"
+
+msgid "Overdue task"
+msgstr "Tarea vencida"
+
+msgid "Tomorrow's task"
+msgstr "Tarea de mañana"
+
+msgid "Another task for today"
+msgstr "Otra tarea para hoy"
+
+msgid "No date"
+msgstr "Sin fecha"
+
+msgid "day"
+msgstr "día"
+
+msgid "days"
+msgstr "días"
+
+msgid "ago"
+msgstr "atrás"
+
+msgid "In"
+msgstr "En"
+
+msgid "Clear Archived Tasks"
+msgstr "Limpiar Tareas Archivadas"
+
+msgid "Are you sure you want to permanently delete all {} archived tasks?"
+msgstr "¿Estás seguro de que quieres eliminar permanentemente todas las {} tareas archivadas?"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Delete All"
+msgstr "Eliminar Todas"
+
+msgid "Task"
+msgstr "Tarea"
+
+msgid "Title"
+msgstr "Título"
+
+msgid "Date"
+msgstr "Fecha"
+
+msgid "Effective date"
+msgstr "Fecha efectiva"
+
+msgid "Description"
+msgstr "Descripción"
+
+msgid "Organization"
+msgstr "Organización"
+
+msgid "Project"
+msgstr "Proyecto"
+
+msgid "Actions"
+msgstr "Acciones"
+
+msgid "Completed"
+msgstr "Completada"
+
+msgid "Delete task"
+msgstr "Eliminar tarea"
+
+msgid "Delete"
+msgstr "Eliminar"
+
+msgid "Select date"
+msgstr "Seleccionar fecha"
+
+msgid "Task effective date"
+msgstr "Fecha efectiva de la tarea"
+
+msgid "Accept"
+msgstr "Aceptar"
+
+msgid "added to"
+msgstr "añadida a"
+
+msgid "removed from"
+msgstr "eliminada de"
+
+msgid "favorites"
+msgstr "favoritas"
+
+msgid "Add project"
+msgstr "Añadir proyecto"
+
+msgid "Create new project"
+msgstr "Crear nuevo proyecto"
+
+msgid "Name"
+msgstr "Nombre"
+
+msgid "Color"
+msgstr "Color"
+
+msgid "Create"
+msgstr "Crear"
+
+msgid "Edit project"
+msgstr "Editar proyecto"
+
+msgid "Save"
+msgstr "Guardar"
+
+msgid "General"
+msgstr "General"
+
+msgid "Interface Language"
+msgstr "Idioma de la interfaz"
+
+msgid "Appearance"
+msgstr "Apariencia"
+
+msgid "Dark Theme"
+msgstr "Tema Oscuro"
+
+msgid "Use dark theme for the application"
+msgstr "Usar tema oscuro para la aplicación"
+
+msgid "Developer"
+msgstr "Desarrollador"
+
+msgid "A simple and powerful task management application"
+msgstr "Una aplicación de gestión de tareas simple y potente"
+
+msgid "Main Developer"
+msgstr "Desarrollador Principal"

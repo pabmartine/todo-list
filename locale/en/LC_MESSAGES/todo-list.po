@@ -1,0 +1,212 @@
+# English translation for Task Manager
+# Copyright (C) 2025
+# This file is distributed under the same license as the Task Manager package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Task Manager 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-01 12:00+0000\n"
+"PO-Revision-Date: 2025-01-01 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Today"
+msgstr "Today"
+
+msgid "Next 7 days"
+msgstr "Next 7 days"
+
+msgid "All"
+msgstr "All"
+
+msgid "Overdue"
+msgstr "Overdue"
+
+msgid "Favorites"
+msgstr "Favorites"
+
+msgid "Archived"
+msgstr "Archived"
+
+msgid "Inbox"
+msgstr "Inbox"
+
+msgid "Task Manager"
+msgstr "Task Manager"
+
+msgid "Add Project"
+msgstr "Add Project"
+
+msgid "Auto-detect"
+msgstr "Auto-detect"
+
+msgid "English"
+msgstr "English"
+
+msgid "Spanish"
+msgstr "Spanish"
+
+msgid "Language"
+msgstr "Language"
+
+msgid "Preferences"
+msgstr "Preferences"
+
+msgid "About"
+msgstr "About"
+
+msgid "Projects"
+msgstr "Projects"
+
+msgid "New task..."
+msgstr "New task..."
+
+msgid "Sort by date: oldest first"
+msgstr "Sort by date: oldest first"
+
+msgid "Sort by date: newest first"
+msgstr "Sort by date: newest first"
+
+msgid "Clear all archived tasks"
+msgstr "Clear all archived tasks"
+
+msgid "Team meeting"
+msgstr "Team meeting"
+
+msgid "Overdue task"
+msgstr "Overdue task"
+
+msgid "Tomorrow's task"
+msgstr "Tomorrow's task"
+
+msgid "Another task for today"
+msgstr "Another task for today"
+
+msgid "No date"
+msgstr "No date"
+
+msgid "day"
+msgstr "day"
+
+msgid "days"
+msgstr "days"
+
+msgid "ago"
+msgstr "ago"
+
+msgid "In"
+msgstr "In"
+
+msgid "Clear Archived Tasks"
+msgstr "Clear Archived Tasks"
+
+msgid "Are you sure you want to permanently delete all {} archived tasks?"
+msgstr "Are you sure you want to permanently delete all {} archived tasks?"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Delete All"
+msgstr "Delete All"
+
+msgid "Task"
+msgstr "Task"
+
+msgid "Title"
+msgstr "Title"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Effective date"
+msgstr "Effective date"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Organization"
+msgstr "Organization"
+
+msgid "Project"
+msgstr "Project"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Delete task"
+msgstr "Delete task"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "Select date"
+msgstr "Select date"
+
+msgid "Task effective date"
+msgstr "Task effective date"
+
+msgid "Accept"
+msgstr "Accept"
+
+msgid "added to"
+msgstr "added to"
+
+msgid "removed from"
+msgstr "removed from"
+
+msgid "favorites"
+msgstr "favorites"
+
+msgid "Add project"
+msgstr "Add project"
+
+msgid "Create new project"
+msgstr "Create new project"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Color"
+msgstr "Color"
+
+msgid "Create"
+msgstr "Create"
+
+msgid "Edit project"
+msgstr "Edit project"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "General"
+msgstr "General"
+
+msgid "Interface Language"
+msgstr "Interface Language"
+
+msgid "Appearance"
+msgstr "Appearance"
+
+msgid "Dark Theme"
+msgstr "Dark Theme"
+
+msgid "Use dark theme for the application"
+msgstr "Use dark theme for the application"
+
+msgid "Developer"
+msgstr "Developer"
+
+msgid "A simple and powerful task management application"
+msgstr "A simple and powerful task management application"
+
+msgid "Main Developer"
+msgstr "Main Developer"
