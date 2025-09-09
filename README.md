@@ -1,6 +1,8 @@
-# Todo List
+# Task Manager
 
 A modern, feature-rich task management application built with Python and GTK 4, designed for productivity and ease of use.
+
+![Todo List Screenshot](images/snapshot.png)
 
 ## Features
 
@@ -68,7 +70,7 @@ python3 todo-list.py
 ## Configuration
 
 The application stores its configuration and data in:
-- **Linux**: `~/.config/todo-list/`
+- **Linux**: `~/.config/task-manager/`
 - **Configuration**: `config.json` (theme, language, window size)
 - **Data**: `tasks.json` (tasks and projects)
 
@@ -121,9 +123,9 @@ The application stores its configuration and data in:
 - **Responsive UI**: Adaptive layouts for different screen sizes
 
 ### Adding Translations
-1. Extract strings: `xgettext --keyword=_ -o todo-list.pot todo-list.py`
-2. Create language file: `msginit -l es -i todo-list.pot`
-3. Place in `locale/[lang]/LC_MESSAGES/todo-list.mo`
+1. Extract strings: `xgettext --keyword=_ -o task-manager.pot todo-list.py`
+2. Create language file: `msginit -l es -i task-manager.pot`
+3. Place in `locale/[lang]/LC_MESSAGES/task-manager.mo`
 
 ## Contributing
 

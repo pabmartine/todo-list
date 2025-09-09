@@ -98,13 +98,7 @@ class TaskManager:
         self.tasks = self.load_tasks()
         if not self.projects:
             self.projects = [
-                {"id": "inbox", "name": _("Inbox"), "color": "black"},
-                {"id": "besu", "name": "BESU", "color": "orange"},
-                {"id": "cambio_comercializadora", "name": "CAMBIO DE COMERCIALIZADORA", "color": "blue"},
-                {"id": "fondos_semiliquidos", "name": "FONDOS SEMILÍQUIDOS", "color": "green"},
-                {"id": "live_items", "name": "LIVE_ITEMS", "color": "yellow"},
-                {"id": "secondary_market", "name": "Secondary Market", "color": "red"},
-                {"id": "my_tasks", "name": "My Tasks", "color": "blue"}
+                {"id": "inbox", "name": _("Inbox"), "color": "black"}
             ]
             self.save_tasks()
 
@@ -611,12 +605,7 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
             
             inbox_project = self.task_manager.get_inbox_project()
             inbox_name = inbox_project["name"] if inbox_project else _("Inbox")
-            
-            self.task_manager.add_task("today", _("Team meeting"), effective_date=today.isoformat(), project=inbox_name)
-            self.task_manager.add_task("today", _("Overdue task"), effective_date=yesterday.isoformat(), project="BESU")
-            self.task_manager.add_task("today", _("Tomorrow's task"), effective_date=tomorrow.isoformat(), project="CAMBIO DE COMERCIALIZADORA")
-            self.task_manager.add_task("today", _("Another task for today"), effective_date=today.isoformat(), project=inbox_name)
-            
+                        
             all_tasks = self.task_manager.tasks.get("all_tasks", [])
             if all_tasks:
                 all_tasks[0]["completed"] = True
