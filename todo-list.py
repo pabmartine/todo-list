@@ -2066,7 +2066,7 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
 class TaskManagerApplication(Adw.Application):
     def __init__(self):
         super().__init__(
-            application_id="com.example.TaskManager",
+            application_id="com.pabmartine.TodoList",
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
         self.connect("activate", self.on_activate)

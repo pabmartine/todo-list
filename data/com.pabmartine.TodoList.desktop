@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Todo List
+Comment=A modern, feature-rich task management application built with Python and GTK 4, designed for productivity and ease of use.
+Exec=todo-list
+Icon=com.pabmartine.TodoList
+Terminal=false
+Categories=Utility;

@@ -1,0 +1,67 @@
+app-id: com.pabmartine.TodoList
+runtime: org.gnome.Platform
+runtime-version: '48'
+sdk: org.gnome.Sdk
+command: todo-list
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=home:ro
+  - --filesystem=/var/log:ro
+  - --filesystem=/tmp
+  - --filesystem=xdg-documents:rw
+  - --filesystem=xdg-desktop:rw
+  - --filesystem=xdg-download:rw
+  - --talk-name=org.freedesktop.portal.*
+  - --talk-name=org.gtk.vfs.*
+
+modules:
+  - name: todo-list
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/bin
+      - mkdir -p /app/share/applications
+      - mkdir -p /app/share/icons/hicolor/scalable/apps
+      - mkdir -p /app/share/locale
+      - mkdir -p /app/share/metainfo
+      
+      # Create wrapper script
+      - |
+        cat > /app/bin/todo-list << 'EOF'
+        #!/bin/bash
+        cd /app/bin
+        exec python3 todo-list.py "$@"
+        EOF
+      
+      - chmod +x /app/bin/todo-list
+      
+      # Install Python script
+      - cp todo-list.py /app/bin/
+      
+      # Install desktop file
+      - install -D -m644 data/com.pabmartine.TodoList.desktop /app/share/applications/com.pabmartine.TodoList.desktop
+      
+      # Install icon
+      - install -D -m644 data/icons/hicolor/scalable/apps/com.pabmartine.TodoList.svg /app/share/icons/hicolor/scalable/apps/com.pabmartine.TodoList.svg
+      
+      # Install translations
+      - cp -r locale/* /app/share/locale/
+      
+      # Install metainfo
+      - install -D -m644 data/com.pabmartine.TodoList.metainfo.xml /app/share/metainfo/com.pabmartine.TodoList.metainfo.xml
+      
+      # Compile translations
+      - |
+        for po_file in /app/share/locale/*/LC_MESSAGES/todo-list.po; do
+          if [ -f "$po_file" ]; then
+            mo_file="${po_file%.po}.mo"
+            msgfmt "$po_file" -o "$mo_file"
+          fi
+        done
+    
+    sources:
+      - type: dir
+        path: .

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.pabmartine.TodoList</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <name>Todo List</name>
+  <summary>A modern, feature-rich task management application built with Python and GTK 4, designed for productivity and ease of use.</summary>
+
+    <description>
+    <p>
+      A modern, feature-rich task management application built with Python and GTK 4, designed for productivity and ease of use, 
+      designed following GNOME Human Interface Guidelines.
+    </p>   
+  </description>
+  
+  <launchable type="desktop-id">com.pabmartine.TodoList.desktop</launchable>
+  
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/pabmartine/todo-list/main/images/snapshot.png</image>
+      <caption>Main interface</caption>
+    </screenshot>
+  </screenshots>
+  
+  <url type="homepage">https://github.com/pabmartine/todo-list</url>
+  <url type="bugtracker">https://github.com/pabmartine/todo-list/issues</url>
+  <url type="vcs-browser">https://github.com/pabmartine/todo-list</url>
+  
+  <developer_name>pabmartine</developer_name>
+  <update_contact>team@todolist.pabmartine</update_contact>
+  
+  <releases>
+    <release version="1.0.0" date="2025-01-31">
+      <description>
+        <p>Initial release</p>        
+      </description>
+    </release>
+  </releases>
+  
+  <content_rating type="oars-1.1"/>
+</component>
