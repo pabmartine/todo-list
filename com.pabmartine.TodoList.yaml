@@ -9,58 +9,79 @@ finish-args:
   - --socket=fallback-x11
   - --socket=wayland
   - --device=dri
-  - --filesystem=home:ro
-  - --filesystem=/var/log:ro
-  - --filesystem=/tmp
-  - --filesystem=xdg-documents:rw
-  - --filesystem=xdg-desktop:rw
-  - --filesystem=xdg-download:rw
+  # Acceso a configuración del usuario (sandbox)
+  - --filesystem=xdg-config:create
+  - --filesystem=xdg-data:create
+  # Solo acceso mínimo necesario
+  - --filesystem=xdg-documents:ro
+  - --filesystem=xdg-desktop:ro
+  # Portales necesarios para GTK
   - --talk-name=org.freedesktop.portal.*
   - --talk-name=org.gtk.vfs.*
+  # Para themes
+  - --talk-name=org.freedesktop.appearance
 
 modules:
   - name: todo-list
     buildsystem: simple
     build-commands:
+      # Crear directorios necesarios
       - mkdir -p /app/bin
       - mkdir -p /app/share/applications
       - mkdir -p /app/share/icons/hicolor/scalable/apps
       - mkdir -p /app/share/locale
       - mkdir -p /app/share/metainfo
       
-      # Create wrapper script
+      # Instalar script principal
+      - cp todo-list.py /app/bin/
+      
+      # Crear script wrapper con configuración correcta
       - |
         cat > /app/bin/todo-list << 'EOF'
         #!/bin/bash
+        
+        # Configurar variables de entorno para Flatpak
+        export FLATPAK_ID="com.pabmartine.TodoList"
+        export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+        export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+        
+        # Asegurar que existen los directorios de configuración
+        mkdir -p "$XDG_CONFIG_HOME/todo-list"
+        mkdir -p "$XDG_DATA_HOME/todo-list"
+        
+        # Ejecutar la aplicación
         cd /app/bin
         exec python3 todo-list.py "$@"
         EOF
       
       - chmod +x /app/bin/todo-list
       
-      # Install Python script
-      - cp todo-list.py /app/bin/
-      
-      # Install desktop file
+      # Instalar archivos de datos
       - install -D -m644 data/com.pabmartine.TodoList.desktop /app/share/applications/com.pabmartine.TodoList.desktop
-      
-      # Install icon
       - install -D -m644 data/icons/hicolor/scalable/apps/com.pabmartine.TodoList.svg /app/share/icons/hicolor/scalable/apps/com.pabmartine.TodoList.svg
-      
-      # Install translations
-      - cp -r locale/* /app/share/locale/
-      
-      # Install metainfo
       - install -D -m644 data/com.pabmartine.TodoList.metainfo.xml /app/share/metainfo/com.pabmartine.TodoList.metainfo.xml
       
-      # Compile translations
+      # Instalar traducciones con compilación
       - |
-        for po_file in /app/share/locale/*/LC_MESSAGES/todo-list.po; do
-          if [ -f "$po_file" ]; then
-            mo_file="${po_file%.po}.mo"
-            msgfmt "$po_file" -o "$mo_file"
-          fi
-        done
+        if [ -d "locale" ]; then
+          for lang_dir in locale/*/; do
+            if [ -d "$lang_dir" ]; then
+              lang=$(basename "$lang_dir")
+              po_file="$lang_dir/LC_MESSAGES/todo-list.po"
+              
+              # Crear directorio de destino
+              mkdir -p "/app/share/locale/$lang/LC_MESSAGES"
+              
+              if [ -f "$po_file" ]; then
+                # Compilar y instalar traducción
+                msgfmt "$po_file" -o "/app/share/locale/$lang/LC_MESSAGES/todo-list.mo"
+                echo "Instalada traducción para $lang"
+              fi
+            fi
+          done
+        else
+          echo "Directorio locale no encontrado"
+        fi
     
     sources:
       - type: dir

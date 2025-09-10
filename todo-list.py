@@ -23,22 +23,77 @@ CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "todo-list")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 DATA_FILE = os.path.join(CONFIG_DIR, "tasks.json")
 
+# Configuración de internacionalización - Compatible con Flatpak
+def get_locale_dir():
+    """Obtener directorio de locale apropiado"""
+    # Buscar en múltiples ubicaciones
+    possible_dirs = [
+        "/app/share/locale",  # Ubicación estándar en Flatpak
+        os.path.join(os.path.dirname(__file__), "locale"),  # Desarrollo local
+        "/usr/share/locale"  # Sistema
+    ]
+    
+    for locale_dir in possible_dirs:
+        if os.path.exists(locale_dir):
+            return locale_dir
+    
+    # Fallback al directorio relativo
+    return os.path.join(os.path.dirname(__file__), "locale")
+
+def get_config_dir():
+    """Obtener directorio de configuración apropiado"""
+    # En Flatpak, usar XDG_CONFIG_HOME que apunta al sandbox
+    config_home = os.environ.get("XDG_CONFIG_HOME")
+    if config_home:
+        return os.path.join(config_home, "todo-list")
+    else:
+        return os.path.join(os.path.expanduser("~"), ".config", "todo-list")
+
+LOCALE_DIR = get_locale_dir()
+DOMAIN = "todo-list"
+
+CONFIG_DIR = get_config_dir()
+CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
+DATA_FILE = os.path.join(CONFIG_DIR, "tasks.json")
+
 def setup_locale(language=None):
-    """Configurar el idioma de la aplicación"""
-    if language:
-        os.environ["LANGUAGE"] = language
-        os.environ["LC_ALL"] = language
+    """Configurar el idioma de la aplicación - Compatible con Flatpak"""
+    if language and language != "auto":
+        try:
+            os.environ["LANGUAGE"] = language
+            os.environ["LC_MESSAGES"] = language
+        except:
+            pass
     
     try:
         locale.setlocale(locale.LC_ALL, "")
     except locale.Error:
-        pass
+        try:
+            # Fallback para entornos restringidos como Flatpak
+            locale.setlocale(locale.LC_ALL, "C.UTF-8")
+        except locale.Error:
+            pass
     
     try:
-        lang_translations = gettext.translation(DOMAIN, LOCALE_DIR, fallback=True)
-        lang_translations.install()
-        return lang_translations.gettext
-    except Exception:
+        # Detectar si estamos en Flatpak
+        is_flatpak = os.path.exists("/app") or os.environ.get("FLATPAK_ID")
+        
+        if is_flatpak:
+            # En Flatpak, usar directamente /app/share/locale
+            locale_dir = "/app/share/locale"
+        else:
+            locale_dir = LOCALE_DIR
+        
+        if os.path.exists(locale_dir):
+            lang_translations = gettext.translation(DOMAIN, locale_dir, fallback=True)
+            lang_translations.install()
+            return lang_translations.gettext
+        else:
+            # Fallback si no hay traducciones
+            return lambda text: text
+            
+    except Exception as e:
+        print(f"Warning: Error configurando locale: {e}")
         return lambda text: text
 
 # Configurar idioma inicial
