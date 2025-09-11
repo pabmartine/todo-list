@@ -471,7 +471,7 @@ class TaskManager:
         self.projects = [p for p in self.projects if p.get("id") != project_id]
         self.save_tasks()
 
-class TaskManagerWindow(Gtk.ApplicationWindow):
+class TaskManagerWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config = ConfigManager()
@@ -490,6 +490,7 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
         window_width = self.config.get("window_width", 1200)
         window_height = self.config.get("window_height", 800)
         self.set_default_size(window_width, window_height)
+        self.set_size_request(360, 200)
 
         self.setup_ui()
         self.setup_custom_css()
@@ -567,111 +568,49 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
         self.refresh_task_list()
 
     def setup_ui(self):
-        self.create_header_bar()
+        # Breakpoint para colapsar en pantallas pequeñas (de la versión 2)
+        breakpoint = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 600sp"))
+        self.add_breakpoint(breakpoint)
+        
+        # NavigationSplitView principal (de la versión 2)
+        self.split_view = Adw.NavigationSplitView()
+        self.split_view.set_sidebar_width_fraction(0.33)
+        self.split_view.set_min_sidebar_width(280)
+        self.split_view.set_max_sidebar_width(350)
+        
+        # Conectar breakpoint para colapsar
+        breakpoint.add_setter(self.split_view, "collapsed", True)
+        
+        # Crear componentes
+        self.create_sidebar()
         self.create_main_area()
         self.create_task_info_panel()
-        self.setup_layout()
+        
+        # Configurar split view
+        self.split_view.set_sidebar(self.sidebar_page)
+        self.split_view.set_content(self.content_page)
+        
+        self.set_content(self.split_view)
+        
         self.refresh_task_list()
 
-    def create_header_bar(self):
-        self.header_bar = Gtk.HeaderBar()
-        
-        self.new_list_btn = Gtk.Button()
-        self.new_list_btn.set_icon_name("project-add-symbolic")
-        self.new_list_btn.set_label(_("Add Project"))
-        self.new_list_btn.add_css_class("flat")
-        self.new_list_btn.connect("clicked", self.on_add_project)
-        self.header_bar.pack_start(self.new_list_btn)
-
-        self.header_title = Gtk.Label()
-        self.header_title.add_css_class("title")
-        self.header_bar.set_title_widget(self.header_title)
-
-        menu_button = Gtk.MenuButton(icon_name="open-menu-symbolic")
-        menu_model = Gio.Menu()
-        
-        # Sección de idioma
-        language_menu = Gio.Menu()
-        language_menu.append(_("Auto-detect"), "app.language::auto")
-        language_menu.append(_("English"), "app.language::en")
-        language_menu.append(_("Spanish"), "app.language::es")
-        menu_model.append_submenu(_("Language"), language_menu)
-        
-        # Sección principal
-        main_section = Gio.Menu()
-        main_section.append(_("Preferences"), "app.preferences")
-        main_section.append(_("About"), "app.about")
-        menu_model.append_section(None, main_section)
-        
-        menu_button.set_menu_model(menu_model)
-        self.header_bar.pack_end(menu_button)
-
-        self.set_titlebar(self.header_bar)
-    
-    def setup_layout(self):
-        main_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-        
-        sidebar_container = self.create_sidebar()
-        sidebar_container.set_size_request(280, -1)
-        main_container.append(sidebar_container)
-        
-        self.content_paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
-        self.content_paned.set_wide_handle(True)
-        self.content_paned.set_hexpand(True)
-        
-        self.content_paned.set_shrink_start_child(True)
-        self.content_paned.set_shrink_end_child(False)
-        self.content_paned.set_resize_start_child(True) 
-        self.content_paned.set_resize_end_child(False)
-        
-        self.content_paned.set_start_child(self.main_area)
-        main_container.append(self.content_paned)
-        
-        self.set_child(main_container)
-        
-        self.update_header_title()
-
-    def on_window_close(self, window):
-        width = self.get_width()
-        height = self.get_height()
-        self.config.set("window_width", width)
-        self.config.set("window_height", height)
-        self.config.set("current_list", self.current_list)
-        return False
-
-    def update_header_title(self):
-        self.header_title.set_text("")
-
-    def initialize_sample_data(self):
-        self.ensure_inbox_project()
-        
-        all_tasks = self.task_manager.tasks.get("all_tasks", [])
-        
-        for task in all_tasks:
-            if "favorite" not in task:
-                task["favorite"] = False
-            if "sort_order" not in task:
-                task["sort_order"] = 0
-        
-        if not all_tasks:
-            yesterday = (datetime.datetime.now() - datetime.timedelta(days=1))
-            today = datetime.datetime.now()
-            tomorrow = (datetime.datetime.now() + datetime.timedelta(days=1))
-            
-            inbox_project = self.task_manager.get_inbox_project()
-            inbox_name = inbox_project["name"] if inbox_project else _("Inbox")
-                        
-            all_tasks = self.task_manager.tasks.get("all_tasks", [])
-            if all_tasks:
-                all_tasks[0]["completed"] = True
-                self.task_manager.save_tasks()
-        else:
-            self.task_manager.save_tasks()
-
     def create_sidebar(self):
-        sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        sidebar_box.add_css_class("sidebar")
-
+        """Crear sidebar usando NavigationPage sin título"""
+        self.sidebar_page = Adw.NavigationPage()
+        self.sidebar_page.set_tag("sidebar")
+        
+        sidebar_toolbar = Adw.ToolbarView()
+        
+        sidebar_header = Adw.HeaderBar()
+        
+        sidebar_toolbar.add_top_bar(sidebar_header)
+        
+        sidebar_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        sidebar_content.set_margin_top(12)
+        sidebar_content.set_margin_bottom(12)
+        sidebar_content.set_margin_start(12)
+        sidebar_content.set_margin_end(12)
+        
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_vexpand(True)
@@ -695,10 +634,24 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
         separator = Gtk.Separator(margin_top=6, margin_bottom=6)
         content_box.append(separator)
 
+        # Crear caja horizontal para el título "Proyectos" y el botón
+        projects_header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        projects_header_box.set_margin_bottom(6)
+
         projects_label = Gtk.Label(label=_("Projects"), halign=Gtk.Align.START)
         projects_label.add_css_class("title-4")
-        projects_label.set_margin_bottom(6)
-        content_box.append(projects_label)
+        projects_label.set_hexpand(True)  # Para que ocupe el espacio disponible
+        projects_header_box.append(projects_label)
+
+        # Crear botón de añadir con solo icono
+        self.new_list_btn = Gtk.Button()
+        self.new_list_btn.set_icon_name("ymuse-add-symbolic")  # o "gtk-add-symbolic"
+        self.new_list_btn.add_css_class("flat")
+        self.new_list_btn.set_tooltip_text(_("Add Project"))
+        self.new_list_btn.connect("clicked", self.on_add_project)
+        projects_header_box.append(self.new_list_btn)
+
+        content_box.append(projects_header_box)
 
         self.projects_list_group = Gtk.ListBox()
         self.projects_list_group.set_selection_mode(Gtk.SelectionMode.SINGLE)
@@ -715,8 +668,10 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
         GLib.idle_add(self.select_current_list)
 
         scrolled.set_child(content_box)
-        sidebar_box.append(scrolled)
-        return sidebar_box
+        sidebar_content.append(scrolled)
+        
+        sidebar_toolbar.set_content(sidebar_content)
+        self.sidebar_page.set_child(sidebar_toolbar)
 
     def create_sidebar_row(self, list_id, name, is_project=False, color=None):
         row = Adw.ActionRow(title=name)
@@ -800,9 +755,40 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
         self.update_header_title()
         
         if hasattr(self, 'task_info_panel') and self.task_info_panel.get_visible():
-            self.on_close_task_info(None)
+            self.on_close_task_info(None)        
 
     def create_main_area(self):
+        """Crear área principal con el título de la aplicación centrado en la barra de título"""
+        self.content_page = Adw.NavigationPage()
+        self.content_page.set_title(_("Todo List"))  # Establecer el título aquí
+        self.content_page.set_tag("content")
+        
+        content_toolbar = Adw.ToolbarView()
+        
+        content_header = Adw.HeaderBar()
+        
+        menu_button = Gtk.MenuButton(icon_name="open-menu-symbolic")
+        menu_model = Gio.Menu()
+        
+        # Sección de idioma
+        language_menu = Gio.Menu()
+        language_menu.append(_("Auto-detect"), "app.language::auto")
+        language_menu.append(_("English"), "app.language::en")
+        language_menu.append(_("Spanish"), "app.language::es")
+        menu_model.append_submenu(_("Language"), language_menu)
+        
+        # Sección principal
+        main_section = Gio.Menu()
+        main_section.append(_("Preferences"), "app.preferences")
+        main_section.append(_("About"), "app.about")
+        menu_model.append_section(None, main_section)
+        
+        menu_button.set_menu_model(menu_model)
+        content_header.pack_end(menu_button)
+        
+        content_toolbar.add_top_bar(content_header)
+        
+        # Contenido principal como en la versión 1
         self.main_area = Adw.Clamp()
         self.main_area.set_maximum_size(840)
         self.main_area.set_margin_start(24)
@@ -825,14 +811,14 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
         title_box.append(self.list_title_label)
 
         # Botón editar
-        self.edit_button = Gtk.Button(icon_name="edit-symbolic")
+        self.edit_button = Gtk.Button(icon_name="text-editor-symbolic")
         self.edit_button.add_css_class("flat")
         self.edit_button.connect("clicked", self.on_edit_project)
         self.edit_button.set_visible(False)
         title_box.append(self.edit_button)
 
         # Botón eliminar
-        self.delete_button = Gtk.Button(icon_name="delete-symbolic")
+        self.delete_button = Gtk.Button(icon_name="user-trash-symbolic")
         self.delete_button.add_css_class("flat")
         self.delete_button.connect("clicked", self.on_delete_project)
         self.delete_button.set_visible(False)
@@ -871,6 +857,9 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
         self.new_task_entry.add_css_class("new-task-entry")
         self.new_task_entry.connect("activate", self.on_new_task_entry_activate)
         content_box.append(self.new_task_entry)
+
+        content_toolbar.set_content(self.main_area)
+        self.content_page.set_child(content_toolbar)
 
         self.refresh_task_list()
 
@@ -1119,7 +1108,7 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
                 self.on_close_task_info(None)
         
         dialog.close()
-    
+
     def create_task_row(self, task):
         row = Adw.ActionRow()
         row.set_name(str(task["id"]))
@@ -1222,6 +1211,7 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
             traceback.print_exc()
 
     def create_task_info_panel(self):
+        """Crear panel de información de tareas (híbrido de NavigationSplitView y panel lateral)"""
         self.task_info_panel = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.task_info_panel.add_css_class("task-info-panel")
         self.task_info_panel.set_visible(False)
@@ -1369,15 +1359,46 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
         actions_group.add(delete_row)
         self.task_info_content.append(actions_group)
 
-        self.task_info_panel.set_size_request(400, -1)
-        self.task_info_panel.set_hexpand(False)
-        
-        self.task_info_panel.set_visible(True)
-        self.content_paned.set_end_child(self.task_info_panel)
-        
-        window_width = self.get_width()
-        target_position = window_width - 400
-        self.content_paned.set_position(target_position)
+        # Mostrar el panel como un NavigationPage en pantallas pequeñas o como panel lateral en grandes
+        width = self.get_width()
+        if width < 600:
+            # Para pantallas pequeñas, usar NavigationPage
+            if not hasattr(self, 'task_info_page'):
+                self.task_info_page = Adw.NavigationPage()
+                self.task_info_page.set_title(_("Task Details"))
+                self.task_info_page.set_tag("task-info")
+                self.task_info_page.set_child(self.task_info_panel)
+            
+            self.split_view.set_content(self.task_info_page)
+        else:
+            # Para pantallas grandes, usar panel lateral
+            self.task_info_panel.set_size_request(400, -1)
+            self.task_info_panel.set_hexpand(False)
+            
+            self.task_info_panel.set_visible(True)
+            
+            # Crear un contenedor horizontal si no existe
+            if not hasattr(self, 'content_paned'):
+                self.content_paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
+                self.content_paned.set_wide_handle(True)
+                self.content_paned.set_hexpand(True)
+                
+                self.content_paned.set_shrink_start_child(True)
+                self.content_paned.set_shrink_end_child(False)
+                self.content_paned.set_resize_start_child(True) 
+                self.content_paned.set_resize_end_child(False)
+                
+                # Mover el contenido actual al panel izquierdo
+                current_content = self.content_page.get_child()
+                self.content_page.set_child(None)
+                self.content_paned.set_start_child(current_content)
+                self.content_page.set_child(self.content_paned)
+            
+            self.content_paned.set_end_child(self.task_info_panel)
+            
+            window_width = self.get_width()
+            target_position = window_width - 400
+            self.content_paned.set_position(target_position)
 
     def on_open_calendar(self, widget):
         dialog = Gtk.Dialog(title=_("Select date"), transient_for=self, modal=True)
@@ -1481,13 +1502,24 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
                 self.refresh_sidebar()
 
     def show_task_info_dialog(self, task):
+        # Para pantallas pequeñas, crear un diálogo simple
         pass
 
     def on_close_task_info(self, button):
         self.task_info_panel.set_visible(False)
         self.current_task_info = None
+        
+        # Restaurar el contenido original si está usando panel lateral
         if hasattr(self, 'content_paned'):
+            original_content = self.content_paned.get_start_child()
+            self.content_paned.set_start_child(None)
             self.content_paned.set_end_child(None)
+            self.content_page.set_child(original_content)
+        
+        # Si está usando NavigationPage, volver al contenido principal
+        width = self.get_width()
+        if width < 600:
+            self.split_view.set_content(self.content_page)                    
 
     def on_task_title_changed(self, row, param):
         if self.current_task_info:
@@ -1813,6 +1845,43 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
                 dialog.set_content(content)
                 dialog.present()
 
+    def on_window_close(self, window):
+        width = self.get_width()
+        height = self.get_height()
+        self.config.set("window_width", width)
+        self.config.set("window_height", height)
+        self.config.set("current_list", self.current_list)
+        return False
+
+    def update_header_title(self):
+        pass  # Ya no necesitamos actualizar un título separado en el header
+
+    def initialize_sample_data(self):
+        self.ensure_inbox_project()
+        
+        all_tasks = self.task_manager.tasks.get("all_tasks", [])
+        
+        for task in all_tasks:
+            if "favorite" not in task:
+                task["favorite"] = False
+            if "sort_order" not in task:
+                task["sort_order"] = 0
+        
+        if not all_tasks:
+            yesterday = (datetime.datetime.now() - datetime.timedelta(days=1))
+            today = datetime.datetime.now()
+            tomorrow = (datetime.datetime.now() + datetime.timedelta(days=1))
+            
+            inbox_project = self.task_manager.get_inbox_project()
+            inbox_name = inbox_project["name"] if inbox_project else _("Inbox")
+                        
+            all_tasks = self.task_manager.tasks.get("all_tasks", [])
+            if all_tasks:
+                all_tasks[0]["completed"] = True
+                self.task_manager.save_tasks()
+        else:
+            self.task_manager.save_tasks()
+
     def setup_shortcuts(self):
         shortcuts = [("<Control>n", self.on_add_task_shortcut)]
         controller = Gtk.ShortcutController()
@@ -2121,7 +2190,6 @@ class TaskManagerWindow(Gtk.ApplicationWindow):
 class TaskManagerApplication(Adw.Application):
     def __init__(self):
         super().__init__(
-            application_id="com.pabmartine.TodoList",
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
         self.connect("activate", self.on_activate)
@@ -2226,12 +2294,13 @@ class TaskManagerApplication(Adw.Application):
                 action.activate(GLib.Variant("s", language_code))
 
     def on_about(self, action, parameter):
-        """Mostrar diálogo Acerca de"""
+        """Mostrar diálogo Acerca de con icono"""
         about_dialog = Adw.AboutWindow()
         about_dialog.set_transient_for(self.win)
         about_dialog.set_modal(True)
         about_dialog.set_application_name(_("Todo List"))
-        about_dialog.set_version("1.0.0")
+        about_dialog.set_application_icon("com.pabmartine.TodoList")  # Agregar el icono
+        about_dialog.set_version("1.0.2")
         about_dialog.set_developer_name("pabmartine")
         about_dialog.set_copyright("© 2025")
         about_dialog.set_comments(_("A simple and powerful task management application"))
@@ -2253,4 +2322,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()                                                                        
