@@ -30,9 +30,24 @@
   <update_contact>team@todolist.pabmartine</update_contact>
   
   <releases>
-    <release version="1.0.0" date="2025-01-31">
+    <release version="1.0.0" date="2025-09-09">
       <description>
         <p>Initial release</p>        
+      </description>
+    </release>
+    <release version="1.0.1" date="2025-09-10">
+      <description>
+        <p>Fix locale</p>        
+      </description>
+    </release>
+    <release version="1.0.2" date="2025-09-10">
+      <description>
+        <p>UI improvements</p>        
+      </description>
+    </release>
+     <release version="1.0.3" date="2025-09-24">
+      <description>
+        <p>Fix minor bugs</p>        
       </description>
     </release>
   </releases>
