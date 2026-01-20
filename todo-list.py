@@ -9,6 +9,7 @@ import datetime
 import functools
 import time
 import threading
+import tempfile
 from pathlib import Path
 from collections import OrderedDict
 import gi
@@ -195,11 +196,23 @@ class ConfigManager:
 
     def save_config(self):
         try:
-            with open(self.config_file, "w", encoding="utf-8") as f:
-                json.dump(self.config, f, indent=2, ensure_ascii=False)
-            debug.log_event("CONFIG", "Config saved successfully")
+            dirname = os.path.dirname(self.config_file)
+            os.makedirs(dirname, exist_ok=True)
+            
+            # Atomic save
+            with tempfile.NamedTemporaryFile("w", dir=dirname, delete=False, encoding="utf-8") as tf:
+                json.dump(self.config, tf, indent=2, ensure_ascii=False)
+                tempname = tf.name
+                
+            os.replace(tempname, self.config_file)
+            debug.log_event("CONFIG", "Config saved successfully (atomic)")
         except Exception as e:
             debug.log_event("CONFIG", f"Error saving config: {e}")
+            if 'tempname' in locals() and os.path.exists(tempname):
+                try:
+                    os.remove(tempname)
+                except:
+                    pass
 
     def get(self, key, default=None):
         return self.config.get(key, default)
@@ -370,11 +383,23 @@ class TaskManager:
     def save_tasks(self):
         try:
             data = {**self.tasks, "projects": self.projects}
-            with open(self.data_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            debug.log_event("TASKMAN", "Tasks saved successfully")
+            dirname = os.path.dirname(self.data_file)
+            os.makedirs(dirname, exist_ok=True)
+            
+            # Atomic save: write to temp file then rename
+            with tempfile.NamedTemporaryFile("w", dir=dirname, delete=False, encoding="utf-8") as tf:
+                json.dump(data, tf, indent=2, ensure_ascii=False)
+                tempname = tf.name
+            
+            os.replace(tempname, self.data_file)
+            debug.log_event("TASKMAN", "Tasks saved successfully (atomic)")
         except Exception as e:
             debug.log_event("TASKMAN", f"Error saving tasks: {e}")
+            if 'tempname' in locals() and os.path.exists(tempname):
+                try:
+                    os.remove(tempname)
+                except:
+                    pass
 
     def add_task(self, list_id, title, due_date=None, priority=0, notes="", project=None, effective_date=None):
         debug.log_event("TASKMAN", f"Adding task: '{title}' to list {list_id}")
@@ -391,7 +416,7 @@ class TaskManager:
             "notes": notes,
             "project": project,
             "created_date": now.isoformat(),
-            "effective_date": effective_date if effective_date else now.isoformat(),
+            "effective_date": effective_date,
             "list_id": list_id,
             "favorite": False,
             "sort_order": 0
@@ -1249,20 +1274,33 @@ class TaskManagerWindow(Adw.ApplicationWindow):
         today_key = "hoy" if "hoy" in keys else None
         no_date_key = "sin_fecha" if "sin_fecha" in keys else None
         
+        # past_days: 1 (Yesterday) ... 10 (Long Ago) -> Descending Date
         past_days.sort(key=lambda x: int(x.split("_")[1]))
+        
+        # future_days: 1 (Tomorrow) ... 10 (Far Future) -> Ascending Date
         future_days.sort(key=lambda x: int(x.split("_")[1]))
         
-        for key in past_days:
-            sorted_groups[key] = grouped[key]
+        group_order = []
         
-        if today_key:
-            sorted_groups[today_key] = grouped[today_key]
-        
-        for key in future_days:
-            sorted_groups[key] = grouped[key]
+        if self.sort_ascending:
+            # Oldest First: Long Ago -> Yesterday -> Today -> Tomorrow -> Far Future
+            group_order.extend(reversed(past_days))
+            if today_key:
+                group_order.append(today_key)
+            group_order.extend(future_days)
+        else:
+            # Newest First: Far Future -> Tomorrow -> Today -> Yesterday -> Long Ago
+            group_order.extend(reversed(future_days))
+            if today_key:
+                group_order.append(today_key)
+            group_order.extend(past_days)
             
+        # Append No Date at the end
         if no_date_key:
-            sorted_groups[no_date_key] = grouped[no_date_key]
+            group_order.append(no_date_key)
+            
+        for key in group_order:
+            sorted_groups[key] = grouped[key]
         
         return sorted_groups
 
@@ -1311,11 +1349,14 @@ class TaskManagerWindow(Adw.ApplicationWindow):
             sort_order = task.get("sort_order", 0)
             effective_date = task.get("effective_date")
             if not effective_date:
-                date_key = "0000-01-01T00:00:00" if self.sort_ascending else "9999-12-31T23:59:59"
+                # If sorting ascending (oldest first), we want no date LAST -> 9999
+                # If sorting descending (newest first), we want no date LAST -> 0000 (because reverse=True)
+                date_key = "9999-12-31T23:59:59" if self.sort_ascending else "0000-01-01T00:00:00"
             else:
                 date_key = effective_date
             
-            return (sort_order, date_key)
+            # Prioritize date sorting over manual sort order
+            return (date_key, sort_order)
         
         sorted_tasks = sorted(tasks, key=get_sort_key, reverse=not self.sort_ascending)
         
@@ -2009,9 +2050,9 @@ class TaskManagerWindow(Adw.ApplicationWindow):
         if self.current_task_info:
             today = datetime.datetime.now()
             old_date = self.current_task_info.get("effective_date", "None")
-            new_date = today.isoformat()
+            new_date = None
             
-            debug.log_event("CALENDAR", f"Clearing date from '{old_date}' to today '{new_date}'")
+            debug.log_event("CALENDAR", f"Clearing date from '{old_date}' to '{new_date}'")
             
             # Verificar existencia de tarea
             task_id = self.current_task_info.get('id')
@@ -2036,11 +2077,10 @@ class TaskManagerWindow(Adw.ApplicationWindow):
                 return
             
             try:
-                formatted_date = today.strftime("%d/%m/%Y")
-                self.date_label.set_text(formatted_date)
-                debug.log_event("CALENDAR", f"Date label updated to today: {formatted_date}")
+                self.date_label.set_text(_("No date"))
+                debug.log_event("CALENDAR", f"Date label updated to No Date")
             except Exception as e:
-                debug.log_event("CALENDAR", f"ERROR updating date label to today: {e}")
+                debug.log_event("CALENDAR", f"ERROR updating date label: {e}")
             
             # Refresh controlado
             debug.log_event("CALENDAR", "Starting refresh after date clear...")
@@ -2317,7 +2357,14 @@ class TaskManagerWindow(Adw.ApplicationWindow):
         debug.log_event("NEW_TASK", f"Creating new task: '{text}'")
         
         if text:
-            list_to_add = "today"
+            # Respect current list context
+            list_to_add = self.current_list
+            effective_date = None
+            
+            # Determine date based on list type
+            if self.current_list in ["today", "next7", "overdue"]:
+                effective_date = datetime.datetime.now().isoformat()
+            
             # Determinar el proyecto basado en la lista actual
             if self.current_list.startswith("project_"):
                 project_id = self.current_list.replace("project_", "")
@@ -2327,8 +2374,8 @@ class TaskManagerWindow(Adw.ApplicationWindow):
                 inbox_project = self.task_manager.get_inbox_project()
                 project_name = inbox_project["name"] if inbox_project else _("Inbox")
             
-            debug.log_event("NEW_TASK", f"Adding to project: {project_name}")
-            self.task_manager.add_task(list_to_add, text, project=project_name)
+            debug.log_event("NEW_TASK", f"Adding to project: {project_name}, Date: {effective_date}")
+            self.task_manager.add_task(list_to_add, text, project=project_name, effective_date=effective_date)
             entry.set_text("")
             self.refresh_task_list()
             self.refresh_sidebar()
@@ -2997,7 +3044,7 @@ class TaskManagerApplication(Adw.Application):
         about_dialog.set_modal(True)
         about_dialog.set_application_name(_("Todo List"))
         about_dialog.set_application_icon("com.pabmartine.TodoList")
-        about_dialog.set_version("1.0.2-debug")  # Versión con debug
+        about_dialog.set_version("1.0.4")  # Versión con debug
         about_dialog.set_developer_name("pabmartine")
         about_dialog.set_copyright("© 2025")
         about_dialog.set_comments(_("A simple and powerful task management application"))

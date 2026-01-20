@@ -50,6 +50,11 @@
         <p>Fix minor bugs</p>        
       </description>
     </release>
+    <release version="1.0.4" date="2026-01-20">
+      <description>
+        <p>Fix sorting, date handling, and atomic save logic</p>
+      </description>
+    </release>
   </releases>
   
   <content_rating type="oars-1.1"/>
