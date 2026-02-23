@@ -263,12 +263,25 @@ class TaskManager:
                 old_name = project["name"]
                 new_name = _("Inbox")
                 project["name"] = new_name
-                if old_name != new_name:
-                    debug.log_event("TASKMAN", f"Updating inbox name from '{old_name}' to '{new_name}'")
-                    all_tasks = self.tasks.get("all_tasks", [])
-                    for task in all_tasks:
-                        if task.get("project") == old_name:
+                
+                # Sincronizar SIEMPRE las tareas con el nombre actual del Inbox
+                # buscando todas las variantes conocidas
+                inbox_variants = ["Inbox", "Bandeja de entrada", "inbox", "Bandeja de Entrada"]
+                if old_name not in inbox_variants:
+                    inbox_variants.append(old_name)
+                
+                debug.log_event("TASKMAN", f"Ensuring all inbox tasks use '{new_name}'")
+                all_tasks = self.tasks.get("all_tasks", [])
+                updated_count = 0
+                for task in all_tasks:
+                    current_proj = task.get("project")
+                    if current_proj in inbox_variants:
+                        if current_proj != new_name:
                             task["project"] = new_name
+                            updated_count += 1
+                
+                if updated_count > 0:
+                    debug.log_event("TASKMAN", f"Updated {updated_count} tasks to the new inbox name: '{new_name}'")
                 break
 
     def migrate_legacy_projects(self):
@@ -464,7 +477,14 @@ class TaskManager:
             project = self.get_project_by_id(project_id)
             if project:
                 project_name = project["name"]
-                result = [task for task in all_tasks if task.get("project") == project_name and not task.get("completed", False)]
+                # Para el Inbox, ser más tolerante con los nombres (por traducciones)
+                if project_id == "inbox":
+                    inbox_variants = ["Inbox", "Bandeja de entrada", "inbox", "Bandeja de Entrada", project_name]
+                    result = [task for task in all_tasks 
+                             if (task.get("project") == project_name or task.get("project") in inbox_variants) 
+                             and not task.get("completed", False)]
+                else:
+                    result = [task for task in all_tasks if task.get("project") == project_name and not task.get("completed", False)]
             else:
                 result = []
         else:
@@ -1160,8 +1180,9 @@ class TaskManagerWindow(Adw.ApplicationWindow):
             for i, task in enumerate(tasks):
                 task_id = task.get('id', 'NO_ID')
                 task_title = task.get('title', 'NO_TITLE')
-                task_date = task.get('effective_date', 'NO_DATE')
-                debug.log_event("REFRESH_TASKS", f"Task {i}: ID={task_id}, Title='{task_title}', Date='{task_date[:10] if task_date != 'NO_DATE' else task_date}'")
+                task_date = task.get('effective_date')
+                task_date_str = str(task_date)[:10] if task_date else 'NO_DATE'
+                debug.log_event("REFRESH_TASKS", f"Task {i}: ID={task_id}, Title='{task_title}', Date='{task_date_str}'")
             
             sorted_tasks = self.sort_tasks(tasks)
             debug.log_event("REFRESH_TASKS", f"Tasks sorted, count: {len(sorted_tasks)}")
