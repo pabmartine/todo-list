@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Task Manager 1.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-01 12:00+0000\n"
+"POT-Creation-Date: 2026-03-07 14:55+0100\n"
 "PO-Revision-Date: 2025-01-01 12:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: Spanish\n"
@@ -16,197 +16,363 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid "Today"
-msgstr "Hoy"
-
-msgid "Next 7 days"
-msgstr "Próximos 7 días"
-
-msgid "All"
-msgstr "Todas"
-
-msgid "Overdue"
-msgstr "Vencidas"
-
-msgid "Favorites"
-msgstr "Favoritas"
-
-msgid "Archived"
-msgstr "Archivadas"
-
-msgid "Inbox"
-msgstr "Bandeja de entrada"
-
-msgid "Task Manager"
-msgstr "Gestor de Tareas"
-
-msgid "Add Project"
-msgstr "Añadir Proyecto"
-
-msgid "Auto-detect"
-msgstr "Detectar automáticamente"
-
-msgid "English"
-msgstr "Inglés"
-
-msgid "Spanish"
-msgstr "Español"
-
-msgid "Language"
-msgstr "Idioma"
-
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:68
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:188
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:40
 msgid "Preferences"
 msgstr "Preferencias"
 
-msgid "About"
-msgstr "Acerca de"
-
-msgid "Projects"
-msgstr "Proyectos"
-
-msgid "New task..."
-msgstr "Nueva tarea..."
-
-msgid "Sort by date: oldest first"
-msgstr "Ordenar por fecha: más antiguas primero"
-
-msgid "Sort by date: newest first"
-msgstr "Ordenar por fecha: más recientes primero"
-
-msgid "Clear all archived tasks"
-msgstr "Limpiar todas las tareas archivadas"
-
-msgid "Team meeting"
-msgstr "Reunión de equipo"
-
-msgid "Overdue task"
-msgstr "Tarea vencida"
-
-msgid "Tomorrow's task"
-msgstr "Tarea de mañana"
-
-msgid "Another task for today"
-msgstr "Otra tarea para hoy"
-
-msgid "No date"
-msgstr "Sin fecha"
-
-msgid "day"
-msgstr "día"
-
-msgid "days"
-msgstr "días"
-
-msgid "ago"
-msgstr "atrás"
-
-msgid "In"
-msgstr "En"
-
-msgid "Clear Archived Tasks"
-msgstr "Limpiar Tareas Archivadas"
-
-msgid "Are you sure you want to permanently delete all {} archived tasks?"
-msgstr "¿Estás seguro de que quieres eliminar permanentemente todas las {} tareas archivadas?"
-
-msgid "Cancel"
-msgstr "Cancelar"
-
-msgid "Delete All"
-msgstr "Eliminar Todas"
-
-msgid "Task"
-msgstr "Tarea"
-
-msgid "Title"
-msgstr "Título"
-
-msgid "Date"
-msgstr "Fecha"
-
-msgid "Effective date"
-msgstr "Fecha efectiva"
-
-msgid "Description"
-msgstr "Descripción"
-
-msgid "Organization"
-msgstr "Organización"
-
-msgid "Project"
-msgstr "Proyecto"
-
-msgid "Actions"
-msgstr "Acciones"
-
-msgid "Completed"
-msgstr "Completada"
-
-msgid "Delete task"
-msgstr "Eliminar tarea"
-
-msgid "Delete"
-msgstr "Eliminar"
-
-msgid "Select date"
-msgstr "Seleccionar fecha"
-
-msgid "Task effective date"
-msgstr "Fecha efectiva de la tarea"
-
-msgid "Accept"
-msgstr "Aceptar"
-
-msgid "added to"
-msgstr "añadida a"
-
-msgid "removed from"
-msgstr "eliminada de"
-
-msgid "favorites"
-msgstr "favoritas"
-
-msgid "Add project"
-msgstr "Añadir proyecto"
-
-msgid "Create new project"
-msgstr "Crear nuevo proyecto"
-
-msgid "Name"
-msgstr "Nombre"
-
-msgid "Color"
-msgstr "Color"
-
-msgid "Create"
-msgstr "Crear"
-
-msgid "Edit project"
-msgstr "Editar proyecto"
-
-msgid "Save"
-msgstr "Guardar"
-
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:73
 msgid "General"
 msgstr "General"
 
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:76
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:183
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:35
+msgid "Language"
+msgstr "Idioma"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:78
 msgid "Interface Language"
 msgstr "Idioma de la interfaz"
 
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:80
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:180
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:32
+msgid "Auto-detect"
+msgstr "Detectar automáticamente"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:81
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:181
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:33
+msgid "English"
+msgstr "Inglés"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:82
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:182
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:34
+msgid "Spanish"
+msgstr "Español"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:98
 msgid "Appearance"
 msgstr "Apariencia"
 
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:100
 msgid "Dark Theme"
 msgstr "Tema Oscuro"
 
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:101
 msgid "Use dark theme for the application"
 msgstr "Usar tema oscuro para la aplicación"
 
-msgid "Developer"
-msgstr "Desarrollador"
-
+#: /home/pablo/Escritorio/todo-list/src/todo_list/app.py:131
 msgid "A simple and powerful task management application"
 msgstr "Una aplicación de gestión de tareas simple y potente"
 
-msgid "Main Developer"
-msgstr "Desarrollador Principal"
+#: /home/pablo/Escritorio/todo-list/src/todo_list/repositories/migrations.py:43
+#: /home/pablo/Escritorio/todo-list/src/todo_list/repositories/migrations.py:54
+#: /home/pablo/Escritorio/todo-list/src/todo_list/repositories/migrations.py:58
+#: /home/pablo/Escritorio/todo-list/src/todo_list/repositories/migrations.py:64
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/project_service.py:33
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:19
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:33
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:67
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:104
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:335
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:429
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:109
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:201
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:523
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:526
+msgid "Inbox"
+msgstr "Bandeja de entrada"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:40
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:486
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:265
+msgid "Today"
+msgstr "Hoy"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:41
+msgid "Next 7 days"
+msgstr "Próximos 7 días"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:42
+msgid "All"
+msgstr "Todas"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:43
+msgid "Overdue"
+msgstr "Vencidas"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:44
+msgid "Favorites"
+msgstr "Favoritas"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/services/task_service.py:45
+msgid "Archived"
+msgstr "Archivadas"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:13
+msgid "Add project"
+msgstr "Añadir proyecto"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:22
+msgid "Create new project"
+msgstr "Crear nuevo proyecto"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:27
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:90
+msgid "Name"
+msgstr "Nombre"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:35
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:100
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:21
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:46
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:65
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:490
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:38
+msgid "Create"
+msgstr "Crear"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:76
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:85
+msgid "Edit project"
+msgstr "Editar proyecto"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:103
+msgid "Save"
+msgstr "Guardar"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/projects.py:124
+msgid "Color"
+msgstr "Color"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:13
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:14
+msgid "Lists"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:51
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:18
+msgid "Projects"
+msgstr "Proyectos"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:59
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:21
+msgid "Add Project"
+msgstr "Añadir Proyecto"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:170
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:12
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:16
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/window.py:58
+msgid "Todo List"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:186
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:38
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:64
+msgid "Import"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:187
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:39
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:45
+msgid "Export"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:189
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:41
+msgid "About"
+msgstr "Acerca de"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:231
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:27
+msgid "Clear all archived tasks"
+msgstr "Limpiar todas las tareas archivadas"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:243
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:25
+#, fuzzy
+msgid "Search tasks..."
+msgstr "Nueva tarea..."
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:260
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/appearance.py:23
+msgid "New task..."
+msgstr "Nueva tarea..."
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:275
+msgid "Sort by date: oldest first"
+msgstr "Ordenar por fecha: más antiguas primero"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/sidebar.py:278
+msgid "Sort by date: newest first"
+msgstr "Ordenar por fecha: más recientes primero"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:18
+msgid "Clear Archived Tasks"
+msgstr "Limpiar Tareas Archivadas"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:19
+msgid "Are you sure you want to permanently delete all {} archived tasks?"
+msgstr ""
+"¿Estás seguro de que quieres eliminar permanentemente todas las {} tareas "
+"archivadas?"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:22
+msgid "Delete All"
+msgstr "Eliminar Todas"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:42
+msgid "Export tasks"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/support/data_actions.py:61
+msgid "Import tasks"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:46
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:260
+msgid "Task Details"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:143
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:418
+msgid "Task"
+msgstr "Tarea"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:144
+msgid "Title"
+msgstr "Título"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:150
+msgid "Date"
+msgstr "Fecha"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:151
+msgid "Effective date"
+msgstr "Fecha efectiva"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:153
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:482
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:576
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:268
+msgid "No date"
+msgstr "Sin fecha"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:177
+msgid "Description"
+msgstr "Descripción"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:197
+msgid "Organization"
+msgstr "Organización"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:198
+msgid "Project"
+msgstr "Proyecto"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:218
+msgid "Subtasks"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:227
+#, fuzzy
+msgid "New subtask..."
+msgstr "Nueva tarea..."
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:232
+msgid "Add"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:241
+msgid "Actions"
+msgstr "Acciones"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:242
+msgid "Completed"
+msgstr "Completada"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:246
+msgid "Delete task"
+msgstr "Eliminar tarea"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:247
+msgid "Delete"
+msgstr "Eliminar"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:449
+msgid "Select date"
+msgstr "Seleccionar fecha"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:459
+msgid "Task effective date"
+msgstr "Fecha efectiva de la tarea"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_detail.py:494
+msgid "Accept"
+msgstr "Aceptar"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:152
+msgid "Project not found"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:272
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:276
+msgid "day"
+msgstr "día"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:272
+msgid "ago"
+msgstr "atrás"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:276
+msgid "In"
+msgstr "En"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:363
+msgid "Subtasks: {}/{}"
+msgstr ""
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:417
+msgid "added to"
+msgstr "añadida a"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:417
+msgid "removed from"
+msgstr "eliminada de"
+
+#: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:418
+msgid "favorites"
+msgstr "favoritas"
+
+#~ msgid "Task Manager"
+#~ msgstr "Gestor de Tareas"
+
+#~ msgid "Team meeting"
+#~ msgstr "Reunión de equipo"
+
+#~ msgid "Overdue task"
+#~ msgstr "Tarea vencida"
+
+#~ msgid "Tomorrow's task"
+#~ msgstr "Tarea de mañana"
+
+#~ msgid "Another task for today"
+#~ msgstr "Otra tarea para hoy"
+
+#~ msgid "days"
+#~ msgstr "días"
+
+#~ msgid "Developer"
+#~ msgstr "Desarrollador"
+
+#~ msgid "Main Developer"
+#~ msgstr "Desarrollador Principal"
