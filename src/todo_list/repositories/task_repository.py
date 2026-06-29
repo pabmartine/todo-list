@@ -2,8 +2,8 @@ import json
 import os
 import tempfile
 
-from ..config import CONFIG_DIR, DATA_FILE
-from ..debug import debug
+from ..core.config import CONFIG_DIR, DATA_FILE
+from ..core.debug import debug
 
 
 class TaskRepository:

@@ -1,5 +1,5 @@
-from ..debug import debug
-from ..i18n import translate as _
+from ..core.debug import debug
+from ..core.i18n import translate as _
 
 
 def _project_slug(name):

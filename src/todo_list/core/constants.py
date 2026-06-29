@@ -1,7 +1,7 @@
 APP_ID = "com.pabmartine.TodoList"
 APP_NAME = "Todo List"
 APP_DOMAIN = "todo-list"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.3.0"
 APP_WEBSITE = "https://github.com/pabmartine/todo-list"
 APP_COPYRIGHT = "© 2025"
 

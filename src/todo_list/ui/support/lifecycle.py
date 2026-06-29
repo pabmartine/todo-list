@@ -1,6 +1,6 @@
 from gi.repository import Gtk
 
-from ...debug import debug, debug_method
+from ...core.debug import debug, debug_method
 
 
 class WindowLifecycleMixin:

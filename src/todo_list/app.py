@@ -5,9 +5,9 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gio, GLib, Gtk
 
-from .constants import APP_ID, APP_NAME, APP_COPYRIGHT, APP_VERSION, APP_WEBSITE
-from .debug import debug, debug_method
-from .i18n import translate as _
+from .core.constants import APP_ID, APP_NAME, APP_COPYRIGHT, APP_VERSION, APP_WEBSITE
+from .core.debug import debug, debug_method
+from .core.i18n import translate as _
 from .ui.window import TaskManagerWindow
 
 

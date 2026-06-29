@@ -8,7 +8,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Gtk
 
 from .app import TaskManagerApplication
-from .debug import debug
+from .core.debug import debug
 
 
 def main():

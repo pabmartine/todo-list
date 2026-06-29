@@ -30,6 +30,11 @@
   <update_contact>team@todolist.pabmartine</update_contact>
   
   <releases>
+    <release version="1.3.0" date="2026-06-29">
+      <description>
+        <p>Maintenance release with minor improvements and fixes</p>
+      </description>
+    </release>
     <release version="1.1.0" date="2026-03-07">
       <description>
         <p>Refactor the codebase into smaller UI modules, add import/export and search improvements, and introduce task subtasks.</p>

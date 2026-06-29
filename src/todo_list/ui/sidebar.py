@@ -1,7 +1,7 @@
 from gi.repository import Adw, Gio, GLib, Gtk
 
-from ..debug import debug, debug_method
-from ..i18n import translate as _
+from ..core.debug import debug, debug_method
+from ..core.i18n import translate as _
 
 
 class SidebarMixin:

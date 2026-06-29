@@ -2,8 +2,8 @@ import datetime
 
 from gi.repository import Adw, Gtk
 
-from ..debug import debug, debug_method
-from ..i18n import translate as _
+from ..core.debug import debug, debug_method
+from ..core.i18n import translate as _
 
 
 class TaskDetailMixin:

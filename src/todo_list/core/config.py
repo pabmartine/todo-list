@@ -65,4 +65,3 @@ class ConfigManager:
         debug.log_event("CONFIG", f"Setting {key} = {value}")
         self.config[key] = value
         self.save_config()
-

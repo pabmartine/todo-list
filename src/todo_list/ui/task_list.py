@@ -4,8 +4,8 @@ from collections import OrderedDict
 
 from gi.repository import Adw, Gdk, GLib, Gtk
 
-from ..debug import debug, debug_method
-from ..i18n import translate as _
+from ..core.debug import debug, debug_method
+from ..core.i18n import translate as _
 
 
 PROJECT_TEXT_COLORS = [

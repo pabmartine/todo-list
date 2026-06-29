@@ -1,4 +1,4 @@
-from ..i18n import translate as _
+from ..core.i18n import translate as _
 from ..models.project import Project
 
 
@@ -47,4 +47,3 @@ class ProjectService:
 
     def delete_project(self, project_id):
         return self.task_service.delete_project(project_id)
-

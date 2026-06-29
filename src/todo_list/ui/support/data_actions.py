@@ -1,7 +1,7 @@
 from gi.repository import Adw, Gtk
 
-from ...debug import debug, debug_method
-from ...i18n import translate as _
+from ...core.debug import debug, debug_method
+from ...core.i18n import translate as _
 
 
 class WindowDataActionsMixin:
@@ -80,4 +80,3 @@ class WindowDataActionsMixin:
                 if hasattr(self, "task_info_panel") and self.task_info_panel.get_visible():
                     self.on_close_task_info(None)
         dialog.destroy()
-

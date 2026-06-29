@@ -1,8 +1,8 @@
 from gi.repository import Adw, Gtk
 
-from ..constants import PROJECT_COLORS
-from ..debug import debug, debug_method
-from ..i18n import translate as _
+from ..core.constants import PROJECT_COLORS
+from ..core.debug import debug, debug_method
+from ..core.i18n import translate as _
 
 
 class ProjectMixin:

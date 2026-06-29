@@ -5,9 +5,9 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Gtk, Adw
 
-from ..config import ConfigManager
-from ..debug import debug, debug_method
-from ..i18n import setup_locale, translate as _
+from ..core.config import ConfigManager
+from ..core.debug import debug, debug_method
+from ..core.i18n import setup_locale, translate as _
 from ..services.project_service import ProjectService
 from ..services.task_service import TaskService as TaskManager
 from .projects import ProjectMixin

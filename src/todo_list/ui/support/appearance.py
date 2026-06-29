@@ -1,7 +1,7 @@
 from gi.repository import Gdk, Gio, Gtk
 
-from ...debug import debug
-from ...i18n import setup_locale, translate as _
+from ...core.debug import debug
+from ...core.i18n import setup_locale, translate as _
 from ..styles import APP_CSS
 
 
@@ -66,4 +66,3 @@ class WindowAppearanceMixin:
         self.task_manager.clean_duplicate_inboxes()
         self.task_manager.save_tasks()
         self.recreate_ui()
-

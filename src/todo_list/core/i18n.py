@@ -10,7 +10,7 @@ _current_gettext = lambda text: text
 
 
 def get_locale_dir():
-    project_locale = Path(__file__).resolve().parents[2] / "locale"
+    project_locale = Path(__file__).resolve().parents[3] / "locale"
     possible_dirs = [
         Path("/app/share/locale"),
         project_locale,
@@ -67,4 +67,3 @@ def translate(text):
 
 
 setup_locale()
-

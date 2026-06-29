@@ -1,7 +1,7 @@
 import datetime
 
-from ..debug import debug
-from ..i18n import translate as _
+from ..core.debug import debug
+from ..core.i18n import translate as _
 from ..models.task import Task
 from ..repositories.migrations import migrate_loaded_data, normalize_inbox_projects
 from ..repositories.task_repository import TaskRepository
