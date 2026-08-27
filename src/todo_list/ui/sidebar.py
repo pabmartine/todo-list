@@ -1,7 +1,20 @@
 from gi.repository import Adw, Gio, GLib, Gtk
 
 from ..core.debug import debug, debug_method
-from ..core.i18n import translate as _
+from ..core.i18n import translate as _, translate_plural as ngettext
+from . import icons
+
+
+# Smart list icons. The names resolve through icons.py, which keeps the
+# original name and falls back to an Adwaita one when the theme lacks it.
+SMART_LIST_ICON_KEYS = {
+    "today": "list-today",
+    "next7": "list-next7",
+    "all": "list-all",
+    "overdue": "list-overdue",
+    "favorites": "list-favorites",
+    "archived": "list-archived",
+}
 
 
 class SidebarMixin:
@@ -54,9 +67,10 @@ class SidebarMixin:
         projects_header_box.append(self.projects_label)
 
         self.new_list_btn = Gtk.Button()
-        self.new_list_btn.set_icon_name("ymuse-add-symbolic")
+        self.new_list_btn.set_child(icons.image("add"))
         self.new_list_btn.add_css_class("flat")
         self.new_list_btn.set_tooltip_text(_("Add Project"))
+        self.new_list_btn.update_property([Gtk.AccessibleProperty.LABEL], [_("Add Project")])
         self.new_list_btn.connect("clicked", self.on_add_project)
         projects_header_box.append(self.new_list_btn)
 
@@ -94,28 +108,25 @@ class SidebarMixin:
             color_dot.add_css_class("project-color")
             inbox_project = self.task_manager.get_inbox_project()
             if inbox_project and name == inbox_project["name"]:
-                color_dot.remove_css_class("color-purple")
                 color_dot.add_css_class("color-black")
             elif color:
                 color_dot.add_css_class(f"color-{color}")
             row.add_prefix(color_dot)
         else:
-            icon_name_map = {
-                "today": "go-jump-today-symbolic",
-                "next7": "date-next-symbolic",
-                "all": "emblem-documents-symbolic",
-                "overdue": "appointment-missed-symbolic",
-                "favorites": "folder-favorites-symbolic",
-                "archived": "archive-symbolic",
-            }
-            icon = Gtk.Image.new_from_icon_name(icon_name_map.get(list_id, "folder-symbolic"))
-            row.add_prefix(icon)
+            row.add_prefix(icons.image(SMART_LIST_ICON_KEYS.get(list_id, "folder")))
 
-        count_label = Gtk.Label(label=str(self.task_manager.get_task_count(list_id)))
+        count = self.task_manager.get_task_count(list_id)
+        count_label = Gtk.Label(label=str(count))
         count_label.add_css_class("dim-label")
         count_label.set_name(f"count_{list_id}")
         row.add_suffix(count_label)
         row.set_activatable(True)
+        # A screen reader would otherwise read the bare number without saying
+        # what it counts.
+        row.update_property(
+            [Gtk.AccessibleProperty.DESCRIPTION],
+            [ngettext("{} task", "{} tasks", count).format(count)],
+        )
         return row
 
     def select_current_list(self):
@@ -159,8 +170,11 @@ class SidebarMixin:
         self.refresh_task_list()
         self.update_header_title()
 
-        if hasattr(self, "task_info_panel") and self.task_info_panel.get_visible():
-            self.on_close_task_info(None)
+        self.close_task_details()
+        # On a collapsed split view the sidebar is a separate page, so move on
+        # to the content once a list has been picked.
+        if self.split_view.get_collapsed():
+            self.split_view.set_show_content(True)
 
     @debug_method("create_main_area")
     def create_main_area(self):
@@ -170,28 +184,17 @@ class SidebarMixin:
         self.content_page.set_title(_("Todo List"))
         self.content_page.set_tag("content")
 
-        content_toolbar = Adw.ToolbarView()
+        self.content_toolbar = Adw.ToolbarView()
         content_header = Adw.HeaderBar()
 
         menu_button = Gtk.MenuButton(icon_name="open-menu-symbolic")
+        menu_button.set_tooltip_text(_("Main Menu"))
+        menu_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Main Menu")])
         self.menu_model = Gio.Menu()
-
-        language_menu = Gio.Menu()
-        language_menu.append(_("Auto-detect"), "app.language::auto")
-        language_menu.append(_("English"), "app.language::en")
-        language_menu.append(_("Spanish"), "app.language::es")
-        self.menu_model.append_submenu(_("Language"), language_menu)
-
-        main_section = Gio.Menu()
-        main_section.append(_("Import"), "app.import")
-        main_section.append(_("Export"), "app.export")
-        main_section.append(_("Preferences"), "app.preferences")
-        main_section.append(_("About"), "app.about")
-        self.menu_model.append_section(None, main_section)
-
+        self.populate_menu_model()
         menu_button.set_menu_model(self.menu_model)
         content_header.pack_end(menu_button)
-        content_toolbar.add_top_bar(content_header)
+        self.content_toolbar.add_top_bar(content_header)
 
         self.main_area = Adw.Clamp()
         self.main_area.set_maximum_size(840)
@@ -207,21 +210,30 @@ class SidebarMixin:
         content_box.set_valign(Gtk.Align.START)
         vertical_wrapper.append(content_box)
 
+        # The original stylesheet got this spacing by redefining Adwaita's
+        # .title-1; widget margins achieve the same without touching a
+        # platform class.
         title_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        title_box.set_margin_top(8)
+        title_box.set_margin_bottom(16)
         self.list_title_label = Gtk.Label()
         self.list_title_label.set_halign(Gtk.Align.START)
         self.list_title_label.add_css_class("title-1")
         self.list_title_label.set_hexpand(True)
         title_box.append(self.list_title_label)
 
-        self.edit_button = Gtk.Button(icon_name="text-editor-symbolic")
+        self.edit_button = Gtk.Button(icon_name="document-edit-symbolic")
         self.edit_button.add_css_class("flat")
+        self.edit_button.set_tooltip_text(_("Edit project"))
+        self.edit_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Edit project")])
         self.edit_button.connect("clicked", self.on_edit_project)
         self.edit_button.set_visible(False)
         title_box.append(self.edit_button)
 
         self.delete_button = Gtk.Button(icon_name="user-trash-symbolic")
         self.delete_button.add_css_class("flat")
+        self.delete_button.set_tooltip_text(_("Delete project"))
+        self.delete_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Delete project")])
         self.delete_button.connect("clicked", self.on_delete_project)
         self.delete_button.set_visible(False)
         title_box.append(self.delete_button)
@@ -229,6 +241,9 @@ class SidebarMixin:
         self.clear_archived_button = Gtk.Button(icon_name="list-remove-all-symbolic")
         self.clear_archived_button.add_css_class("flat")
         self.clear_archived_button.set_tooltip_text(_("Clear all archived tasks"))
+        self.clear_archived_button.update_property(
+            [Gtk.AccessibleProperty.LABEL], [_("Clear all archived tasks")]
+        )
         self.clear_archived_button.connect("clicked", self.on_clear_archived_tasks)
         self.clear_archived_button.set_visible(False)
         title_box.append(self.clear_archived_button)
@@ -241,41 +256,78 @@ class SidebarMixin:
         content_box.append(title_box)
 
         self.search_entry = Gtk.SearchEntry(placeholder_text=_("Search tasks..."))
-        self.search_entry.set_key_capture_widget(self)
+        # No set_key_capture_widget(): key capture runs in the capture phase, so
+        # it swallowed typing meant for the always visible "new task" entry.
         self.search_entry.connect("search-changed", self.on_search_changed)
         content_box.append(self.search_entry)
 
-        self.task_list_scrolled = Gtk.ScrolledWindow()
-        self.task_list_scrolled.set_vexpand(True)
-        self.task_list_scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        self.task_list_scrolled.set_propagate_natural_height(True)
-
-        self.task_list = Gtk.ListBox()
-        self.task_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        self.task_list.connect("row-activated", self.on_task_row_activated)
-        self.task_list.add_css_class("boxed-list")
-        self.task_list_scrolled.set_child(self.task_list)
-        content_box.append(self.task_list_scrolled)
+        content_box.append(self._task_area())
 
         self.new_task_entry = Gtk.Entry(placeholder_text=_("New task..."))
-        self.new_task_entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "list-add-symbolic")
-        self.new_task_entry.add_css_class("new-task-entry")
+        self.new_task_entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, icons.name("add"))
         self.new_task_entry.connect("activate", self.on_new_task_entry_activate)
+        self.new_task_entry.update_property([Gtk.AccessibleProperty.LABEL], [_("New task")])
         content_box.append(self.new_task_entry)
 
-        content_toolbar.set_content(self.main_area)
-        self.content_page.set_child(content_toolbar)
-
-        self.refresh_task_list()
+        self.content_toolbar.set_content(self.main_area)
+        # The page's child is set by setup_ui(), which wraps this toolbar in the
+        # details overlay split view. Parenting it here would make
+        # AdwOverlaySplitView.set_content() fail.
         debug.log_event("UI", "Main area created successfully")
+
+    def _task_area(self):
+        """The task list, plus a placeholder shown when there is nothing to list."""
+        self.task_list = Gtk.ListBox()
+        self.task_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        self.task_list.add_css_class("task-list")
+        self.task_list.connect("row-activated", self.on_task_row_activated)
+
+        self.task_list_scrolled = Gtk.ScrolledWindow()
+        self.task_list_scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.task_list_scrolled.set_vexpand(True)
+        self.task_list_scrolled.set_propagate_natural_height(True)
+        self.task_list_scrolled.set_child(self.task_list)
+
+        self.empty_state = Adw.StatusPage(
+            title=_("No Tasks"),
+            description=_("Tasks you add appear here."),
+        )
+        self.empty_state.set_icon_name(icons.name("list-archived"))
+
+        self.task_area_stack = Gtk.Stack()
+        self.task_area_stack.add_named(self.task_list_scrolled, "tasks")
+        self.task_area_stack.add_named(self.empty_state, "empty")
+        self.task_area_stack.set_vexpand(True)
+        return self.task_area_stack
+
+    def populate_menu_model(self):
+        """(Re)build the primary menu.
+
+        Language is not repeated here: it already lives in Preferences, and the
+        HIG lists Keyboard Shortcuts and About as standard primary menu items.
+        """
+        self.menu_model.remove_all()
+
+        data_section = Gio.Menu()
+        data_section.append(_("Import…"), "app.import")
+        data_section.append(_("Export…"), "app.export")
+        self.menu_model.append_section(None, data_section)
+
+        app_section = Gio.Menu()
+        app_section.append(_("Preferences"), "app.preferences")
+        app_section.append(_("Keyboard Shortcuts"), "app.shortcuts")
+        app_section.append(_("About Todo List"), "app.about")
+        self.menu_model.append_section(None, app_section)
 
     def update_sort_button(self):
         if self.sort_ascending:
             self.sort_button.set_icon_name("view-sort-ascending-symbolic")
-            self.sort_button.set_tooltip_text(_("Sort by date: oldest first"))
+            label = _("Sort by date: oldest first")
         else:
             self.sort_button.set_icon_name("view-sort-descending-symbolic")
-            self.sort_button.set_tooltip_text(_("Sort by date: newest first"))
+            label = _("Sort by date: newest first")
+        self.sort_button.set_tooltip_text(label)
+        self.sort_button.update_property([Gtk.AccessibleProperty.LABEL], [label])
 
     @debug_method("on_sort_toggle")
     def on_sort_toggle(self, button):
@@ -286,6 +338,11 @@ class SidebarMixin:
     def on_search_changed(self, entry):
         self.search_query = entry.get_text().strip()
         self.refresh_task_list()
+
+    def start_search(self):
+        """Focus the search entry (Ctrl+F)."""
+        if hasattr(self, "search_entry"):
+            self.search_entry.grab_focus()
 
     @debug_method("refresh_sidebar")
     def refresh_sidebar(self):
@@ -308,25 +365,19 @@ class SidebarMixin:
                 for list_id, list_name in self.task_manager.lists.items():
                     self.main_list_group.append(self.create_sidebar_row(list_id, list_name, is_project=False))
 
-            if hasattr(self, "projects_list_group") and self.projects_list_group:
-                while child := self.projects_list_group.get_first_child():
-                    self.projects_list_group.remove(child)
-                for project in self.task_manager.projects:
-                    project_id = f"project_{project.get('id', project['name'])}"
-                    self.projects_list_group.append(
-                        self.create_sidebar_row(project_id, project["name"], is_project=True, color=project["color"])
-                    )
-
+            self.refresh_sidebar_projects()
             GLib.idle_add(self.select_current_list)
         except Exception as exc:
             debug.log_event("SIDEBAR", f"Error in recreate_sidebar: {exc}", stack_info=True)
 
     def refresh_sidebar_projects(self):
         debug.log_event("SIDEBAR", "Refreshing sidebar projects only")
-        if hasattr(self, "projects_list_group"):
-            while child := self.projects_list_group.get_first_child():
-                self.projects_list_group.remove(child)
-            for project in self.task_manager.projects:
-                project_id = f"project_{project.get('id', project['name'])}"
-                row = self.create_sidebar_row(project_id, project["name"], is_project=True, color=project["color"])
-                self.projects_list_group.append(row)
+        if not hasattr(self, "projects_list_group"):
+            return
+
+        while child := self.projects_list_group.get_first_child():
+            self.projects_list_group.remove(child)
+        for project in self.task_manager.projects:
+            project_id = f"project_{project.get('id', project['name'])}"
+            row = self.create_sidebar_row(project_id, project["name"], is_project=True, color=project["color"])
+            self.projects_list_group.append(row)

@@ -9,44 +9,42 @@ from ..core.i18n import translate as _
 class TaskDetailMixin:
     @debug_method("create_task_info_panel")
     def create_task_info_panel(self):
+        """Build the task details panel.
+
+        The panel is the end sidebar of an AdwOverlaySplitView, so libadwaita
+        handles the adaptive behaviour: side by side on wide windows, overlaid
+        on narrow ones.
+        """
         debug.log_event("UI", "Creating task info panel")
 
-        self.task_info_panel = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.task_info_panel.add_css_class("task-info-panel")
-        self.task_info_panel.set_visible(False)
-        self.task_info_panel.set_hexpand(False)
-        self.task_info_panel.set_vexpand(True)
-        self.task_info_panel.set_size_request(400, -1)
+        detail_header = Adw.HeaderBar()
+        detail_header.set_show_end_title_buttons(False)
+        detail_header.set_title_widget(Adw.WindowTitle(title=_("Task Details")))
 
-        header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        header_box.set_margin_start(12)
-        header_box.set_margin_end(12)
-        header_box.set_margin_top(12)
-        header_box.set_margin_bottom(6)
-        spacer = Gtk.Box(hexpand=True)
-        header_box.append(spacer)
         close_button = Gtk.Button(icon_name="window-close-symbolic")
         close_button.add_css_class("flat")
-        close_button.add_css_class("circular")
+        close_button.set_tooltip_text(_("Close task details"))
+        close_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Close task details")])
         close_button.connect("clicked", self.on_close_task_info)
-        header_box.append(close_button)
-        self.task_info_panel.append(header_box)
+        detail_header.pack_end(close_button)
+
+        self.task_info_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        self.task_info_content.set_margin_top(12)
+        self.task_info_content.set_margin_bottom(12)
+        self.task_info_content.set_margin_start(12)
+        self.task_info_content.set_margin_end(12)
 
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_vexpand(True)
-        self.task_info_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        self.task_info_content.set_margin_start(12)
-        self.task_info_content.set_margin_end(12)
-        self.task_info_content.set_margin_bottom(12)
         scrolled.set_child(self.task_info_content)
-        self.task_info_panel.append(scrolled)
 
-        self.task_info_page = Adw.NavigationPage()
-        self.task_info_page.set_title(_("Task Details"))
-        self.task_info_page.set_tag("task-info")
+        self.detail_toolbar = Adw.ToolbarView()
+        self.detail_toolbar.add_top_bar(detail_header)
+        self.detail_toolbar.set_content(scrolled)
 
         debug.log_event("UI", "Task info panel created successfully")
+        return self.detail_toolbar
 
     @debug_method("on_task_row_activated")
     def on_task_row_activated(self, listbox, row):
@@ -61,276 +59,188 @@ class TaskDetailMixin:
             debug.log_event("TASK_CLICK", "No task ID found in row name")
             return
 
-        if task_id_str == "" or not task_id_str.isdigit():
+        if not task_id_str.isdigit():
             debug.log_event("TASK_CLICK", f"Ignoring non-task row: '{task_id_str}'")
             return
 
-        try:
-            task_id = int(task_id_str)
-            debug.log_event("TASK_CLICK", f"Looking for task with ID: {task_id}")
-        except ValueError:
-            debug.log_event("TASK_CLICK", f"Invalid task ID format: '{task_id_str}'")
-            return
+        task_id = int(task_id_str)
+        debug.log_event("TASK_CLICK", f"Looking for task with ID: {task_id}")
 
-        found_task = None
-        all_tasks = self.task_manager.tasks.get("all_tasks", [])
-        debug.log_event("TASK_CLICK", f"Total tasks available: {len(all_tasks)}")
-
-        for task in all_tasks:
-            if task.get("id") == task_id:
-                found_task = task
-                break
-
+        found_task = self.task_manager.find_task(task_id)
         if found_task:
             debug.log_event(
                 "TASK_CLICK",
                 f"Found task: '{found_task.get('title', 'unknown')}' (ID: {found_task.get('id', 'unknown')})",
             )
-            self.on_task_row_clicked(found_task)
-            return
-
-        debug.log_event("TASK_CLICK", f"ERROR: Task with ID {task_id} not found in task list")
-        debug.log_event("TASK_CLICK", f"Available task IDs: {[t.get('id') for t in all_tasks]}")
-
-    @debug_method("on_task_row_clicked")
-    def on_task_row_clicked(self, task):
-        debug.log_event(
-            "TASK_CLICK",
-            f"Task row clicked: '{task.get('title', 'unknown')}' (ID: {task.get('id', 'unknown')})",
-        )
-
-        task_id = task.get("id")
-        if task_id is None:
-            debug.log_event("TASK_CLICK", "ERROR: Task has no ID")
+            self.show_task_info_panel(found_task)
             return
 
         all_tasks = self.task_manager.tasks.get("all_tasks", [])
-        task_exists = any(t.get("id") == task_id for t in all_tasks)
-        if not task_exists:
-            debug.log_event("TASK_CLICK", f"ERROR: Task {task_id} no longer exists in task manager")
-            return
-
-        if self.get_width() < 600:
-            debug.log_event("TASK_CLICK", "Using dialog mode (small screen)")
-            self.show_task_info_dialog(task)
-        else:
-            debug.log_event("TASK_CLICK", "Using panel mode (large screen)")
-            self.show_task_info_panel(task)
-
-    def show_task_info_dialog(self, task):
-        debug.log_event("TASK_INFO", "Routing small-screen task details through panel flow")
-        self.show_task_info_panel(task)
+        debug.log_event("TASK_CLICK", f"ERROR: Task with ID {task_id} not found in task list")
+        debug.log_event("TASK_CLICK", f"Available task IDs: {[t.get('id') for t in all_tasks]}")
 
     @debug_method("show_task_info_panel")
     def show_task_info_panel(self, task):
         try:
             debug.log_event("TASK_INFO", f"Showing task info panel for task {task.get('id')}: '{task.get('title', 'unknown')}'")
             self.current_task_info = task
-            debug.log_event("TASK_INFO", f"Set current_task_info to: {task.get('title', 'unknown')}")
 
-            if hasattr(self, "task_info_panel") and self.task_info_panel.get_visible():
-                debug.log_event("TASK_INFO", "Panel already visible, clearing content only")
-                child_count = 0
-                child = self.task_info_content.get_first_child()
-                while child:
-                    child_count += 1
-                    self.task_info_content.remove(child)
-                    child = self.task_info_content.get_first_child()
-                debug.log_event("TASK_INFO", f"Removed {child_count} previous child widgets")
-            else:
-                debug.log_event("TASK_INFO", "Panel not visible, will create fresh")
+            child_count = 0
+            while child := self.task_info_content.get_first_child():
+                child_count += 1
+                self.task_info_content.remove(child)
+            debug.log_event("TASK_INFO", f"Removed {child_count} previous child widgets")
 
-            title_group = Adw.PreferencesGroup(title=_("Task"))
-            self.task_title_entry = Adw.EntryRow(title=_("Title"))
-            self.task_title_entry.set_text(task["title"])
-            self.task_title_entry.connect("notify::text", self.on_task_title_changed)
-            title_group.add(self.task_title_entry)
-            self.task_info_content.append(title_group)
+            self._build_title_group(task)
+            self._build_date_group(task)
+            self._build_description_group(task)
+            self._build_organization_group(task)
+            self._build_subtasks_group(task)
+            self._build_actions_group(task)
 
-            date_group = Adw.PreferencesGroup(title=_("Date"))
-            self.task_date_row = Adw.ActionRow(title=_("Effective date"))
-
-            current_date_str = _("No date")
-            if task.get("effective_date"):
-                try:
-                    date_obj = datetime.datetime.fromisoformat(task["effective_date"])
-                    current_date_str = date_obj.strftime("%d/%m/%Y")
-                except Exception:
-                    pass
-
-            self.date_label = Gtk.Label(label=current_date_str)
-            self.date_label.add_css_class("dim-label")
-            self.task_date_row.add_suffix(self.date_label)
-
-            calendar_button = Gtk.Button()
-            calendar_button.set_icon_name("x-office-calendar-symbolic")
-            calendar_button.add_css_class("flat")
-            calendar_button.connect("clicked", self.on_open_calendar)
-            self.task_date_row.add_suffix(calendar_button)
-
-            self.task_date_row.set_activatable(True)
-            self.task_date_row.connect("activated", self.on_open_calendar)
-
-            date_group.add(self.task_date_row)
-            self.task_info_content.append(date_group)
-
-            notes_group = Adw.PreferencesGroup(title=_("Description"))
-            notes_scrolled = Gtk.ScrolledWindow(height_request=100, vexpand=False)
-            notes_scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-            notes_scrolled.add_css_class("description-card")
-
-            self.task_notes_buffer = Gtk.TextBuffer(text=task.get("notes", ""))
-            self.task_notes_buffer.connect("changed", self.on_task_notes_changed)
-            notes_view = Gtk.TextView(
-                buffer=self.task_notes_buffer,
-                wrap_mode=Gtk.WrapMode.WORD,
-                margin_top=8,
-                margin_bottom=8,
-                margin_start=12,
-                margin_end=12,
-            )
-            notes_scrolled.set_child(notes_view)
-
-            self.task_info_content.append(notes_group)
-            self.task_info_content.append(notes_scrolled)
-
-            project_group = Adw.PreferencesGroup(title=_("Organization"))
-            project_row = Adw.ComboRow(title=_("Project"))
-
-            inbox_project = self.task_manager.get_inbox_project()
-            inbox_name = inbox_project["name"] if inbox_project else _("Inbox")
-            project_names = [inbox_name] + [p["name"] for p in self.task_manager.projects if p.get("id") != "inbox"]
-
-            model = Gtk.StringList.new(project_names)
-            project_row.set_model(model)
-
-            current_project = task.get("project", inbox_name)
-            try:
-                selected_idx = project_names.index(current_project)
-                project_row.set_selected(selected_idx)
-            except ValueError:
-                project_row.set_selected(0)
-
-            project_row.connect("notify::selected", self.on_project_changed_enhanced)
-            project_group.add(project_row)
-            self.task_info_content.append(project_group)
-
-            subtasks_group = Adw.PreferencesGroup(title=_("Subtasks"))
-            subtasks_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-            subtasks_box.set_margin_top(6)
-            subtasks_box.set_margin_bottom(6)
-
-            for subtask in task.get("subtasks", []):
-                subtasks_box.append(self.create_subtask_row(task["id"], subtask))
-
-            add_subtask_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-            self.new_subtask_entry = Gtk.Entry(placeholder_text=_("New subtask..."))
-            self.new_subtask_entry.set_hexpand(True)
-            self.new_subtask_entry.connect("activate", self.on_add_subtask_activate)
-            add_subtask_box.append(self.new_subtask_entry)
-
-            add_subtask_button = Gtk.Button(label=_("Add"))
-            add_subtask_button.add_css_class("suggested-action")
-            add_subtask_button.connect("clicked", self.on_add_subtask_clicked)
-            add_subtask_box.append(add_subtask_button)
-
-            subtasks_box.append(add_subtask_box)
-            subtasks_group.add(subtasks_box)
-            self.task_info_content.append(subtasks_group)
-
-            actions_group = Adw.PreferencesGroup(title=_("Actions"))
-            completed_row = Adw.SwitchRow(title=_("Completed"), active=task["completed"])
-            completed_row.connect("notify::active", self.on_task_completed_toggled)
-            actions_group.add(completed_row)
-
-            delete_row = Adw.ActionRow(title=_("Delete task"))
-            delete_button = Gtk.Button(label=_("Delete"), halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER)
-            delete_button.add_css_class("destructive-action")
-            delete_button.connect("clicked", lambda btn: self.on_delete_current_task())
-            delete_row.add_suffix(delete_button)
-            delete_row.set_activatable(True)
-            delete_row.connect("activated", lambda w: self.on_delete_current_task())
-            actions_group.add(delete_row)
-            self.task_info_content.append(actions_group)
-
-            if self.get_width() < 600:
-                debug.log_event("TASK_INFO", "Using NavigationPage mode")
-                if not hasattr(self, "task_info_page"):
-                    self.task_info_page = Adw.NavigationPage()
-                    self.task_info_page.set_title(_("Task Details"))
-                    self.task_info_page.set_tag("task-info")
-                    self.task_info_page.set_child(self.task_info_panel)
-
-                self.split_view.set_content(self.task_info_page)
-            else:
-                debug.log_event("TASK_INFO", "Using panel mode")
-
-                if not hasattr(self, "content_paned") or self.content_paned.get_parent() != self.content_page:
-                    debug.log_event("TASK_INFO", "Creating/recreating content_paned structure")
-                    self.content_paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
-                    self.content_paned.set_wide_handle(True)
-                    self.content_paned.set_hexpand(True)
-                    self.content_paned.set_shrink_start_child(True)
-                    self.content_paned.set_shrink_end_child(False)
-                    self.content_paned.set_resize_start_child(True)
-                    self.content_paned.set_resize_end_child(False)
-
-                    current_content = self.content_page.get_child()
-                    if isinstance(current_content, Gtk.Paned):
-                        debug.log_event("TASK_INFO", "Extracting content from existing paned")
-                        actual_content = current_content.get_start_child()
-                        current_content.set_start_child(None)
-                        current_content.set_end_child(None)
-                    else:
-                        actual_content = current_content
-
-                    if actual_content:
-                        self.content_page.set_child(None)
-                        self.content_paned.set_start_child(actual_content)
-                        self.content_page.set_child(self.content_paned)
-                        debug.log_event("TASK_INFO", "Content_paned structure created")
-                    else:
-                        debug.log_event("TASK_INFO", "ERROR: No content found to move to paned")
-                        return
-                else:
-                    debug.log_event("TASK_INFO", "Reusing existing content_paned structure")
-
-                self.task_info_panel.set_size_request(400, -1)
-                self.task_info_panel.set_hexpand(False)
-                self.task_info_panel.set_visible(True)
-                self.content_paned.set_end_child(self.task_info_panel)
-
-                target_position = self.get_width() - 400
-                self.content_paned.set_position(target_position)
-                debug.log_event("TASK_INFO", f"Set paned position to: {target_position}")
-
+            self.detail_split.set_show_sidebar(True)
             debug.log_event("TASK_INFO", "Task info panel shown successfully")
         except Exception as exc:
             debug.log_event("TASK_INFO", f"ERROR in show_task_info_panel: {exc}", stack_info=True)
 
-    def create_subtask_row(self, task_id, subtask):
-        row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+    def _build_title_group(self, task):
+        title_group = Adw.PreferencesGroup(title=_("Task"))
+        self.task_title_entry = Adw.EntryRow(title=_("Title"))
+        self.task_title_entry.set_text(task["title"])
+        self.task_title_entry.connect("notify::text", self.on_task_title_changed)
+        title_group.add(self.task_title_entry)
+        self.task_info_content.append(title_group)
 
-        toggle = Gtk.CheckButton(active=subtask.get("completed", False))
+    def _build_date_group(self, task):
+        date_group = Adw.PreferencesGroup(title=_("Date"))
+        self.task_date_row = Adw.ActionRow(title=_("Effective date"))
+
+        current_date_str = _("No date")
+        if task.get("effective_date"):
+            try:
+                date_obj = datetime.datetime.fromisoformat(task["effective_date"])
+                current_date_str = date_obj.strftime("%d/%m/%Y")
+            except Exception:
+                pass
+
+        self.date_label = Gtk.Label(label=current_date_str)
+        self.date_label.add_css_class("dim-label")
+        self.task_date_row.add_suffix(self.date_label)
+
+        calendar_button = Gtk.Button(icon_name="x-office-calendar-symbolic", valign=Gtk.Align.CENTER)
+        calendar_button.add_css_class("flat")
+        calendar_button.set_tooltip_text(_("Select date"))
+        calendar_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Select date")])
+        calendar_button.connect("clicked", self.on_open_calendar)
+        self.task_date_row.add_suffix(calendar_button)
+
+        self.task_date_row.set_activatable(True)
+        self.task_date_row.connect("activated", self.on_open_calendar)
+
+        date_group.add(self.task_date_row)
+        self.task_info_content.append(date_group)
+
+    def _build_description_group(self, task):
+        notes_group = Adw.PreferencesGroup(title=_("Description"))
+
+        self.task_notes_buffer = Gtk.TextBuffer(text=task.get("notes", ""))
+        self.task_notes_buffer.connect("changed", self.on_task_notes_changed)
+        notes_view = Gtk.TextView(
+            buffer=self.task_notes_buffer,
+            wrap_mode=Gtk.WrapMode.WORD,
+            top_margin=8,
+            bottom_margin=8,
+            left_margin=12,
+            right_margin=12,
+        )
+        notes_view.update_property([Gtk.AccessibleProperty.LABEL], [_("Description")])
+
+        notes_scrolled = Gtk.ScrolledWindow(height_request=100, vexpand=False)
+        notes_scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        notes_scrolled.add_css_class("card")
+        notes_scrolled.set_child(notes_view)
+
+        # Added to the group rather than next to it, so it lines up with the
+        # other groups in the panel.
+        notes_group.add(notes_scrolled)
+        self.task_info_content.append(notes_group)
+
+    def _build_organization_group(self, task):
+        project_group = Adw.PreferencesGroup(title=_("Organization"))
+        project_row = Adw.ComboRow(title=_("Project"))
+
+        inbox_project = self.task_manager.get_inbox_project()
+        inbox_name = inbox_project["name"] if inbox_project else _("Inbox")
+        project_names = [inbox_name] + [p["name"] for p in self.task_manager.projects if p.get("id") != "inbox"]
+
+        project_row.set_model(Gtk.StringList.new(project_names))
+        current_project = task.get("project", inbox_name)
+        try:
+            project_row.set_selected(project_names.index(current_project))
+        except ValueError:
+            project_row.set_selected(0)
+
+        project_row.connect("notify::selected", self.on_project_changed_enhanced)
+        project_group.add(project_row)
+        self.task_info_content.append(project_group)
+
+    def _build_subtasks_group(self, task):
+        subtasks_group = Adw.PreferencesGroup(title=_("Subtasks"))
+
+        for subtask in task.get("subtasks", []):
+            subtasks_group.add(self.create_subtask_row(subtask))
+
+        self.new_subtask_entry = Adw.EntryRow(title=_("New subtask"))
+        self.new_subtask_entry.set_show_apply_button(True)
+        self.new_subtask_entry.connect("apply", self.on_add_subtask_activate)
+        subtasks_group.add(self.new_subtask_entry)
+
+        self.task_info_content.append(subtasks_group)
+
+    def _build_actions_group(self, task):
+        actions_group = Adw.PreferencesGroup(title=_("Actions"))
+
+        completed_row = Adw.SwitchRow(title=_("Completed"), active=task["completed"])
+        completed_row.connect("notify::active", self.on_task_completed_toggled)
+        actions_group.add(completed_row)
+
+        delete_row = Adw.ActionRow(title=_("Delete task"))
+        delete_button = Gtk.Button(label=_("Delete"), valign=Gtk.Align.CENTER)
+        delete_button.add_css_class("destructive-action")
+        delete_button.connect("clicked", lambda btn: self.on_delete_current_task())
+        delete_row.add_suffix(delete_button)
+        delete_row.set_activatable_widget(delete_button)
+        actions_group.add(delete_row)
+
+        self.task_info_content.append(actions_group)
+
+    def create_subtask_row(self, subtask):
+        """A subtask is a row of a preferences group, so it uses AdwEntryRow.
+
+        The previous raw Gtk.Box added straight into the group did not get the
+        group's row styling, which is why subtasks looked unframed.
+        """
+        row = Adw.EntryRow(title=_("Subtask"))
+        row.set_text(subtask.get("title", ""))
+        row.set_show_apply_button(True)
+
+        toggle = Gtk.CheckButton(active=subtask.get("completed", False), valign=Gtk.Align.CENTER)
+        toggle.set_tooltip_text(_("Mark as completed"))
+        toggle.update_property([Gtk.AccessibleProperty.LABEL], [_("Mark as completed")])
         toggle.connect("toggled", lambda button, sid=subtask["id"]: self.on_subtask_toggled(sid))
-        row_box.append(toggle)
+        row.add_prefix(toggle)
 
-        title_entry = Gtk.Entry()
-        title_entry.set_hexpand(True)
-        title_entry.set_text(subtask.get("title", ""))
-        title_entry.connect("activate", lambda entry, sid=subtask["id"]: self.on_subtask_title_activate(entry, sid))
-        focus_controller = Gtk.EventControllerFocus()
-        focus_controller.connect("leave", lambda controller, sid=subtask["id"], entry=title_entry: self.on_subtask_title_focus_out(entry, sid))
-        title_entry.add_controller(focus_controller)
-        if subtask.get("completed", False):
-            title_entry.add_css_class("dim-label")
-        row_box.append(title_entry)
-
-        delete_button = Gtk.Button(icon_name="user-trash-symbolic")
+        delete_button = Gtk.Button(icon_name="user-trash-symbolic", valign=Gtk.Align.CENTER)
         delete_button.add_css_class("flat")
+        delete_button.set_tooltip_text(_("Delete subtask"))
+        delete_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Delete subtask")])
         delete_button.connect("clicked", lambda button, sid=subtask["id"]: self.on_delete_subtask(sid))
-        row_box.append(delete_button)
-        return row_box
+        row.add_suffix(delete_button)
+
+        row.connect("apply", lambda entry, sid=subtask["id"]: self._update_subtask_title(entry, sid))
+        if subtask.get("completed", False):
+            row.add_css_class("dim-label")
+        return row
 
     def refresh_current_task_panel(self):
         if not self.current_task_info:
@@ -338,18 +248,12 @@ class TaskDetailMixin:
 
         refreshed_task = self.task_manager.find_task(self.current_task_info.get("id"))
         if not refreshed_task:
-            self.on_close_task_info(None)
+            self.close_task_details()
             return
 
         self.show_task_info_panel(refreshed_task)
 
     def on_add_subtask_activate(self, entry):
-        self._create_subtask_from_entry(entry)
-
-    def on_add_subtask_clicked(self, button):
-        self._create_subtask_from_entry(self.new_subtask_entry)
-
-    def _create_subtask_from_entry(self, entry):
         if not self.current_task_info:
             return
 
@@ -373,13 +277,6 @@ class TaskDetailMixin:
         self.current_task_info = self.task_manager.find_task(self.current_task_info.get("id"))
         self.refresh_task_list()
         self.refresh_current_task_panel()
-
-    def on_subtask_title_activate(self, entry, subtask_id):
-        self._update_subtask_title(entry, subtask_id)
-
-    def on_subtask_title_focus_out(self, entry, subtask_id):
-        self._update_subtask_title(entry, subtask_id)
-        return False
 
     def _update_subtask_title(self, entry, subtask_id):
         if not self.current_task_info:
@@ -418,13 +315,7 @@ class TaskDetailMixin:
             return False
 
         task_id = self.current_task_info.get("id")
-        all_tasks = self.task_manager.tasks.get("all_tasks", [])
-        found_task = None
-        for task in all_tasks:
-            if task.get("id") == task_id:
-                found_task = task
-                break
-
+        found_task = self.task_manager.find_task(task_id)
         if not found_task:
             debug.log_event("INTEGRITY", f"ERROR: Task {task_id} not found in task manager!")
             return False
@@ -446,63 +337,60 @@ class TaskDetailMixin:
         debug.log_event("CALENDAR", "=== CALENDAR DIALOG OPENING ===")
         debug.log_event("CALENDAR", f"Current task info: {self.current_task_info.get('title') if self.current_task_info else 'None'}")
 
-        dialog = Gtk.Dialog(title=_("Select date"), transient_for=self, modal=True)
-        dialog.set_default_size(300, 400)
-
-        content_area = dialog.get_content_area()
-        content_area.set_spacing(12)
-        content_area.set_margin_start(24)
-        content_area.set_margin_end(24)
-        content_area.set_margin_top(24)
-        content_area.set_margin_bottom(24)
-
-        title_label = Gtk.Label(label=_("Task effective date"))
-        title_label.add_css_class("title-4")
-        content_area.append(title_label)
-
-        calendar = Gtk.Calendar()
-        calendar.set_show_heading(True)
-        calendar.set_show_day_names(True)
-        calendar.set_show_week_numbers(False)
-
+        calendar = Gtk.Calendar(show_heading=True, show_day_names=True, show_week_numbers=False)
         if self.current_task_info and self.current_task_info.get("effective_date"):
             try:
                 date_obj = datetime.datetime.fromisoformat(self.current_task_info["effective_date"])
-                calendar.select_day(date_obj.date())
+                self._select_calendar_date(calendar, date_obj)
                 debug.log_event("CALENDAR", f"Pre-selected date: {date_obj.date()}")
             except Exception as exc:
                 debug.log_event("CALENDAR", f"Error pre-selecting date: {exc}")
 
-        content_area.append(calendar)
+        dialog = Adw.Dialog(title=_("Select date"), content_width=360)
 
-        button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        button_box.set_halign(Gtk.Align.END)
-        button_box.set_margin_top(12)
-
-        clear_button = Gtk.Button(label=_("No date"))
-        clear_button.connect("clicked", lambda b: self.on_date_cleared(dialog))
-        button_box.append(clear_button)
-
-        today_button = Gtk.Button(label=_("Today"))
-        today_button.connect("clicked", lambda b: self.on_today_selected(calendar, dialog))
-        button_box.append(today_button)
+        header = Adw.HeaderBar()
+        header.set_show_start_title_buttons(False)
+        header.set_show_end_title_buttons(False)
 
         cancel_button = Gtk.Button(label=_("Cancel"))
         cancel_button.connect("clicked", lambda b: dialog.close())
-        button_box.append(cancel_button)
+        header.pack_start(cancel_button)
 
-        accept_button = Gtk.Button(label=_("Accept"))
-        accept_button.add_css_class("suggested-action")
-        accept_button.connect("clicked", lambda b: self.on_date_selected(calendar, dialog))
-        button_box.append(accept_button)
+        select_button = Gtk.Button(label=_("Select"))
+        select_button.add_css_class("suggested-action")
+        select_button.connect("clicked", lambda b: self.on_date_selected(calendar, dialog))
+        header.pack_end(select_button)
 
-        content_area.append(button_box)
-        dialog.present()
+        content = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=12,
+            margin_top=12,
+            margin_bottom=12,
+            margin_start=12,
+            margin_end=12,
+        )
+        content.append(calendar)
+
+        quick_actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6, homogeneous=True)
+        today_button = Gtk.Button(label=_("Today"))
+        today_button.connect("clicked", lambda b: self.on_today_selected(calendar, dialog))
+        quick_actions.append(today_button)
+
+        clear_button = Gtk.Button(label=_("No date"))
+        clear_button.connect("clicked", lambda b: self.on_date_cleared(dialog))
+        quick_actions.append(clear_button)
+        content.append(quick_actions)
+
+        toolbar = Adw.ToolbarView()
+        toolbar.add_top_bar(header)
+        toolbar.set_content(content)
+        dialog.set_child(toolbar)
+        dialog.set_default_widget(select_button)
+        dialog.present(self)
         debug.log_event("CALENDAR", "Calendar dialog presented")
 
     def on_date_selected(self, calendar, dialog):
         debug.log_event("CALENDAR", "=== DATE SELECTION STARTED ===")
-        debug.log_event("CALENDAR", f"Current task info before change: {self.current_task_info}")
 
         if self.current_task_info:
             selected_date = calendar.get_date()
@@ -516,7 +404,6 @@ class TaskDetailMixin:
 
             debug.log_event("CALENDAR", f"Date changing from '{old_date}' to '{new_date}'")
             debug.log_event("CALENDAR", f"Task ID: {self.current_task_info.get('id')}")
-            debug.log_event("CALENDAR", f"Task title: {self.current_task_info.get('title')}")
 
             task_id = self.current_task_info.get("id")
             if not self.task_manager.task_exists(task_id):
@@ -524,12 +411,8 @@ class TaskDetailMixin:
                 dialog.close()
                 return
 
-            updated_task = self.task_manager.update_task(task_id, effective_date=new_date)
-            self.current_task_info = updated_task
+            self.current_task_info = self.task_manager.update_task(task_id, effective_date=new_date)
             debug.log_event("CALENDAR", f"Task effective_date updated to: {new_date}")
-
-            actual_date = self.current_task_info.get("effective_date")
-            debug.log_event("CALENDAR", f"Verification - actual date in task: {actual_date}")
 
             try:
                 self.date_label.set_text(date_obj.strftime("%d/%m/%Y"))
@@ -552,12 +435,21 @@ class TaskDetailMixin:
 
     def on_today_selected(self, calendar, dialog):
         debug.log_event("CALENDAR", "Today button selected")
-        calendar.select_day(datetime.date.today())
+        self._select_calendar_date(calendar, datetime.date.today())
         self.on_date_selected(calendar, dialog)
+
+    @staticmethod
+    def _select_calendar_date(calendar, date):
+        """Gtk.Calendar.select_day() is deprecated; set the properties instead.
+
+        Gtk.Calendar counts months from 0, unlike datetime.
+        """
+        calendar.set_year(date.year)
+        calendar.set_month(date.month - 1)
+        calendar.set_day(date.day)
 
     def on_date_cleared(self, dialog):
         debug.log_event("CALENDAR", "=== DATE CLEAR STARTED ===")
-        debug.log_event("CALENDAR", f"Current task info: {self.current_task_info}")
 
         if self.current_task_info:
             old_date = self.current_task_info.get("effective_date", "None")
@@ -569,8 +461,7 @@ class TaskDetailMixin:
                 dialog.close()
                 return
 
-            updated_task = self.task_manager.update_task(task_id, effective_date=None)
-            self.current_task_info = updated_task
+            self.current_task_info = self.task_manager.update_task(task_id, effective_date=None)
 
             try:
                 self.date_label.set_text(_("No date"))
@@ -607,28 +498,18 @@ class TaskDetailMixin:
             self.refresh_task_list()
             self.refresh_sidebar()
 
+    def close_task_details(self):
+        """Hide the details panel, if it is showing."""
+        if not hasattr(self, "detail_split"):
+            return
+        if self.detail_split.get_show_sidebar():
+            debug.log_event("TASK_INFO", "Closing task info panel")
+            self.detail_split.set_show_sidebar(False)
+        self.current_task_info = None
+
     @debug_method("on_close_task_info")
-    def on_close_task_info(self, button):
-        debug.log_event("TASK_INFO", "Closing task info panel")
-
-        try:
-            self.task_info_panel.set_visible(False)
-            if hasattr(self, "current_task_info"):
-                current_title = self.current_task_info.get("title", "unknown") if self.current_task_info else "None"
-                debug.log_event("TASK_INFO", f"Clearing current_task_info: {current_title}")
-                self.current_task_info = None
-
-            if hasattr(self, "content_paned"):
-                debug.log_event("TASK_INFO", "Removing panel from paned view (keeping structure)")
-                self.content_paned.set_end_child(None)
-
-            if self.get_width() < 600:
-                debug.log_event("TASK_INFO", "Restoring content from navigation page")
-                self.split_view.set_content(self.content_page)
-
-            debug.log_event("TASK_INFO", "Task info panel closed successfully")
-        except Exception as exc:
-            debug.log_event("TASK_INFO", f"Error closing task info panel: {exc}", stack_info=True)
+    def on_close_task_info(self, button=None):
+        self.close_task_details()
 
     def on_task_title_changed(self, row, param):
         debug.log_event("TASK_EDIT", "Task title changed")
@@ -666,19 +547,35 @@ class TaskDetailMixin:
                 self.refresh_sidebar()
 
     def on_delete_current_task(self):
+        """Delete the open task, offering an undo toast rather than a prompt.
+
+        The HIG prefers a reversible action over a confirmation dialog for
+        single-item deletions.
+        """
         debug.log_event("TASK_DELETE", "Deleting current task")
         if not self.current_task_info:
             return
 
-        task_to_delete_id = self.current_task_info.get("id")
-        task_title = self.current_task_info.get("title", "unknown")
-        debug.log_event("TASK_DELETE", f"Deleting task {task_to_delete_id}: '{task_title}'")
+        snapshot = dict(self.current_task_info)
+        task_title = snapshot.get("title", "unknown")
+        debug.log_event("TASK_DELETE", f"Deleting task {snapshot.get('id')}: '{task_title}'")
 
-        if self.task_manager.delete_task(task_to_delete_id):
-            debug.log_event("TASK_DELETE", "Task deleted successfully")
-            self.refresh_task_list()
-            self.refresh_sidebar()
-            self.on_close_task_info(None)
+        if not self.task_manager.delete_task(snapshot.get("id")):
+            debug.log_event("TASK_DELETE", "ERROR: Task was not found for deletion")
             return
 
-        debug.log_event("TASK_DELETE", "ERROR: Task was not found for deletion")
+        debug.log_event("TASK_DELETE", "Task deleted successfully")
+        self.close_task_details()
+        self.refresh_task_list()
+        self.refresh_sidebar()
+
+        toast = Adw.Toast.new(_("“{}” deleted").format(task_title))
+        toast.set_button_label(_("Undo"))
+        toast.connect("button-clicked", lambda t: self._undo_task_delete(snapshot))
+        self.show_toast(toast)
+
+    def _undo_task_delete(self, snapshot):
+        self.task_manager.restore_task(snapshot)
+        self.refresh_task_list()
+        self.refresh_sidebar()
+        debug.log_event("TASK_DELETE", f"Restored task {snapshot.get('id')}")

@@ -2,34 +2,77 @@
 <component type="desktop-application">
   <id>com.pabmartine.TodoList</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>GPL-3.0+</project_license>
-  <name>Todo List</name>
-  <summary>A modern, feature-rich task management application built with Python and GTK 4, designed for productivity and ease of use.</summary>
+  <project_license>GPL-3.0-or-later</project_license>
 
-    <description>
+  <name>Todo List</name>
+  <!-- Kept short and without a trailing dot: appstreamcli rejects a summary
+       longer than 90 characters or ending in punctuation. -->
+  <summary>Manage your tasks and projects</summary>
+
+  <description>
     <p>
-      A modern, feature-rich task management application built with Python and GTK 4, designed for productivity and ease of use, 
-      designed following GNOME Human Interface Guidelines.
-    </p>   
+      A modern, feature-rich task management application built with Python and GTK 4,
+      designed for productivity and ease of use, designed following GNOME Human
+      Interface Guidelines.
+    </p>
   </description>
-  
+
   <launchable type="desktop-id">com.pabmartine.TodoList.desktop</launchable>
-  
+
   <screenshots>
     <screenshot type="default">
       <image>https://raw.githubusercontent.com/pabmartine/todo-list/main/images/snapshot.png</image>
       <caption>Main interface</caption>
     </screenshot>
   </screenshots>
-  
+
   <url type="homepage">https://github.com/pabmartine/todo-list</url>
   <url type="bugtracker">https://github.com/pabmartine/todo-list/issues</url>
   <url type="vcs-browser">https://github.com/pabmartine/todo-list</url>
-  
-  <developer_name>pabmartine</developer_name>
+
+  <!-- <developer_name> is deprecated in favour of the <developer> element. -->
+  <developer id="io.github.pabmartine">
+    <name>pabmartine</name>
+  </developer>
   <update_contact>team@todolist.pabmartine</update_contact>
-  
+
+  <content_rating type="oars-1.1"/>
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+
+  <!-- Releases must be listed newest first. -->
   <releases>
+    <release version="1.4.0" date="2026-08-27">
+      <description>
+        <p>Alignment with the GNOME Human Interface Guidelines and libadwaita.</p>
+        <p>Fixed:</p>
+        <ul>
+          <li>The Edit Project dialog crashed on open</li>
+          <li>Icon names missing from the Flatpak runtime rendered as broken images</li>
+          <li>Day counts in date headings were never translated</li>
+          <li>Typing in the task list stole keystrokes from the new task entry</li>
+          <li>Custom styling made the window unreadable in the dark colour scheme</li>
+        </ul>
+        <p>Changed:</p>
+        <ul>
+          <li>Replaced dialogs deprecated in GTK 4.10 and libadwaita 1.6</li>
+          <li>The task details panel is now an adaptive overlay split view</li>
+          <li>Deleting a project asks for confirmation; deleting a task can be undone</li>
+          <li>Added empty state placeholders, toasts and a keyboard shortcuts window</li>
+          <li>The dark theme switch is now a Follow System / Light / Dark choice</li>
+          <li>File import and export go through the desktop portal, so the app no
+              longer needs broad filesystem permissions</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.3.0" date="2026-06-29">
       <description>
         <p>Maintenance release with minor improvements and fixes</p>
@@ -40,32 +83,30 @@
         <p>Refactor the codebase into smaller UI modules, add import/export and search improvements, and introduce task subtasks.</p>
       </description>
     </release>
-    <release version="1.0.0" date="2025-09-09">
-      <description>
-        <p>Initial release</p>        
-      </description>
-    </release>
-    <release version="1.0.1" date="2025-09-10">
-      <description>
-        <p>Fix locale</p>        
-      </description>
-    </release>
-    <release version="1.0.2" date="2025-09-10">
-      <description>
-        <p>UI improvements</p>        
-      </description>
-    </release>
-     <release version="1.0.3" date="2025-09-24">
-      <description>
-        <p>Fix minor bugs</p>        
-      </description>
-    </release>
     <release version="1.0.4" date="2026-01-20">
       <description>
         <p>Fix sorting, date handling, and atomic save logic</p>
       </description>
     </release>
+    <release version="1.0.3" date="2025-09-24">
+      <description>
+        <p>Fix minor bugs</p>
+      </description>
+    </release>
+    <release version="1.0.2" date="2025-09-10">
+      <description>
+        <p>UI improvements</p>
+      </description>
+    </release>
+    <release version="1.0.1" date="2025-09-10">
+      <description>
+        <p>Fix locale</p>
+      </description>
+    </release>
+    <release version="1.0.0" date="2025-09-09">
+      <description>
+        <p>Initial release</p>
+      </description>
+    </release>
   </releases>
-  
-  <content_rating type="oars-1.1"/>
 </component>

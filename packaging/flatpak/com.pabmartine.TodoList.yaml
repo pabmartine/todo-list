@@ -4,18 +4,17 @@ runtime-version: "50"
 sdk: org.gnome.Sdk
 command: todo-list
 
+# Import/export go through the file chooser portal, so the app needs no
+# filesystem permissions of its own: the portal hands it the single file the
+# user picked. Its own data lives in the per-app directory, which is always
+# writable inside the sandbox. Portal access (including the appearance settings
+# libadwaita reads to follow the system dark style) is allowed by default and
+# needs no --talk-name.
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
   - --socket=wayland
   - --device=dri
-  - --filesystem=xdg-config:create
-  - --filesystem=xdg-data:create
-  - --filesystem=xdg-documents:ro
-  - --filesystem=xdg-desktop:ro
-  - --talk-name=org.freedesktop.portal.*
-  - --talk-name=org.gtk.vfs.*
-  - --talk-name=org.freedesktop.appearance
 
 modules:
   - name: todo-list

@@ -6,7 +6,13 @@ from pathlib import Path
 from .constants import APP_DOMAIN
 from .debug import debug
 
+
+def _fallback_ngettext(singular, plural, n):
+    return singular if n == 1 else plural
+
+
 _current_gettext = lambda text: text
+_current_ngettext = _fallback_ngettext
 
 
 def get_locale_dir():
@@ -25,7 +31,7 @@ def get_locale_dir():
 
 
 def setup_locale(language=None):
-    global _current_gettext
+    global _current_gettext, _current_ngettext
 
     debug.log_event("LOCALE", f"Setting up locale: {language}")
 
@@ -51,6 +57,7 @@ def setup_locale(language=None):
             translations = gettext.translation(APP_DOMAIN, locale_dir, fallback=True)
             translations.install()
             _current_gettext = translations.gettext
+            _current_ngettext = translations.ngettext
             debug.log_event("LOCALE", "Translations loaded successfully")
             return _current_gettext
 
@@ -59,11 +66,22 @@ def setup_locale(language=None):
         debug.log_event("LOCALE", f"Error setting up locale: {exc}")
 
     _current_gettext = lambda text: text
+    _current_ngettext = _fallback_ngettext
     return _current_gettext
 
 
 def translate(text):
     return _current_gettext(text)
+
+
+def translate_plural(singular, plural, n):
+    """Pick the right plural form for `n`.
+
+    Needed because a phrase cannot be assembled from separately translated
+    fragments: `_('day' if n == 1 else 'days')` is not even extractable by
+    xgettext, so those fragments never reached the catalogues.
+    """
+    return _current_ngettext(singular, plural, n)
 
 
 setup_locale()

@@ -12,18 +12,11 @@ class WindowLifecycleMixin:
         self._in_cleanup = True
         debug.log_event("CLEANUP", "Starting UI state cleanup")
         try:
-            if hasattr(self, "task_info_panel") and self.task_info_panel.get_visible():
-                debug.log_event("CLEANUP", "Closing task info panel")
-                self.on_close_task_info(None)
-
-            if hasattr(self, "current_task_info") and self.current_task_info:
-                debug.log_event("CLEANUP", f"Clearing current task info: {self.current_task_info.get('title', 'unknown')}")
-                self.current_task_info = None
+            self.close_task_details()
 
             if hasattr(self, "task_list"):
                 self.task_list.unselect_all()
                 debug.log_event("CLEANUP", "Cleared task list selection")
-
             debug.log_event("CLEANUP", "UI state cleanup completed")
         except Exception as exc:
             debug.log_event("CLEANUP", f"Error during cleanup: {exc}")
@@ -56,18 +49,38 @@ class WindowLifecycleMixin:
                 debug.log_event("INIT", "Persisted missing task defaults")
 
     def setup_shortcuts(self):
+        """Window-scoped shortcuts. App-wide ones are accels in the application."""
         debug.log_event("UI", "Setting up keyboard shortcuts")
-        shortcuts = [("<Control>n", self.on_add_task_shortcut)]
+        # Default (managed) scope on purpose: a presented AdwDialog handles
+        # Escape closer to the focus, so it still closes before this fires.
         controller = Gtk.ShortcutController()
-        for trigger, callback in shortcuts:
-            shortcut = Gtk.Shortcut(trigger=Gtk.ShortcutTrigger.parse_string(trigger))
-            action = Gtk.CallbackAction.new(callback)
-            shortcut.set_action(action)
+
+        for trigger, callback in (
+            ("<Control>n", self.on_add_task_shortcut),
+            ("<Control>f", self.on_search_shortcut),
+            ("Escape", self.on_escape_shortcut),
+        ):
+            shortcut = Gtk.Shortcut(
+                trigger=Gtk.ShortcutTrigger.parse_string(trigger),
+                action=Gtk.CallbackAction.new(callback),
+            )
             controller.add_shortcut(shortcut)
+
         self.add_controller(controller)
 
     def on_add_task_shortcut(self, widget, args):
-        debug.log_event("SHORTCUT", "Ctrl+N pressed, focusing new task entry")
         if hasattr(self, "new_task_entry"):
             self.new_task_entry.grab_focus()
         return True
+
+    def on_search_shortcut(self, widget, args):
+        self.start_search()
+        return True
+
+    def on_escape_shortcut(self, widget, args):
+        """Escape closes the details panel."""
+        if hasattr(self, "detail_split") and self.detail_split.get_show_sidebar():
+            debug.log_event("SHORTCUT", "Escape pressed, closing task details")
+            self.close_task_details()
+            return True
+        return False

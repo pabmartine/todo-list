@@ -1,4 +1,4 @@
-from gi.repository import Gdk, Gio, Gtk
+from gi.repository import Gdk, Gtk
 
 from ...core.debug import debug
 from ...core.i18n import setup_locale, translate as _
@@ -16,31 +16,25 @@ class WindowAppearanceMixin:
             self.content_page.set_title(_("Todo List"))
         if hasattr(self, "projects_label"):
             self.projects_label.set_text(_("Projects"))
-
         if hasattr(self, "new_list_btn"):
             self.new_list_btn.set_tooltip_text(_("Add Project"))
+            self.new_list_btn.update_property([Gtk.AccessibleProperty.LABEL], [_("Add Project")])
         if hasattr(self, "new_task_entry"):
             self.new_task_entry.set_placeholder_text(_("New task..."))
         if hasattr(self, "search_entry"):
             self.search_entry.set_placeholder_text(_("Search tasks..."))
         if hasattr(self, "clear_archived_button"):
             self.clear_archived_button.set_tooltip_text(_("Clear all archived tasks"))
-
+        if hasattr(self, "edit_button"):
+            self.edit_button.set_tooltip_text(_("Edit project"))
+        if hasattr(self, "delete_button"):
+            self.delete_button.set_tooltip_text(_("Delete project"))
+        if hasattr(self, "sort_button"):
+            self.update_sort_button()
         if hasattr(self, "menu_model"):
-            self.menu_model.remove_all()
-            language_menu = Gio.Menu()
-            language_menu.append(_("Auto-detect"), "app.language::auto")
-            language_menu.append(_("English"), "app.language::en")
-            language_menu.append(_("Spanish"), "app.language::es")
-            self.menu_model.append_submenu(_("Language"), language_menu)
+            self.populate_menu_model()
 
-            main_section = Gio.Menu()
-            main_section.append(_("Import"), "app.import")
-            main_section.append(_("Export"), "app.export")
-            main_section.append(_("Preferences"), "app.preferences")
-            main_section.append(_("About"), "app.about")
-            self.menu_model.append_section(None, main_section)
-
+        self.close_task_details()
         self.refresh_sidebar()
         self.refresh_task_list()
         debug.log_event("UI", "UI recreation completed")
@@ -48,7 +42,7 @@ class WindowAppearanceMixin:
     def setup_custom_css(self):
         debug.log_event("UI", "Setting up custom CSS")
         css_provider = Gtk.CssProvider()
-        css_provider.load_from_data(APP_CSS.encode())
+        css_provider.load_from_string(APP_CSS)
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(),
             css_provider,

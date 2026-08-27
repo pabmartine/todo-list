@@ -56,7 +56,7 @@ The application stores its files in:
 Stored settings include:
 
 - Current language
-- Dark theme preference
+- Style preference (follow system, light or dark)
 - Window size
 - Last selected list
 

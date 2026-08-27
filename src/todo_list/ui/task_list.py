@@ -5,7 +5,8 @@ from collections import OrderedDict
 from gi.repository import Adw, Gdk, GLib, Gtk
 
 from ..core.debug import debug, debug_method
-from ..core.i18n import translate as _
+from ..core.i18n import translate as _, translate_plural as ngettext
+from . import icons
 
 
 PROJECT_TEXT_COLORS = [
@@ -94,37 +95,53 @@ class TaskListMixin:
             debug.log_event("REFRESH_TASKS", f"Tasks sorted, count: {len(sorted_tasks)}")
 
             if sorted_tasks:
-                self.task_list_scrolled.set_visible(True)
                 if self.should_group_by_date():
                     debug.log_event("REFRESH_TASKS", "Using grouped task rows")
                     self.create_grouped_task_rows(sorted_tasks)
                 else:
                     debug.log_event("REFRESH_TASKS", "Using standard task rows")
                     self.create_standard_task_rows(sorted_tasks)
+                self.task_area_stack.set_visible_child_name("tasks")
             else:
                 debug.log_event("REFRESH_TASKS", "No tasks to show")
-                self.task_list_scrolled.set_visible(False)
+                self._update_empty_state()
+                self.task_area_stack.set_visible_child_name("empty")
 
             final_row_count = 0
             child = self.task_list.get_first_child()
             while child:
                 final_row_count += 1
-                if hasattr(child, "get_name"):
-                    debug.log_event("REFRESH_TASKS", f"Final row {final_row_count}: {child.get_name() or 'HEADER'}")
                 child = child.get_next_sibling()
-
             debug.log_event("REFRESH_TASKS", f"Created {final_row_count} new rows")
             self.update_header_title()
             debug.log_event("REFRESH_TASKS", "=== REFRESH COMPLETED SUCCESSFULLY ===")
         except Exception as exc:
             debug.log_event("REFRESH_TASKS", f"=== REFRESH ERROR: {exc} ===", stack_info=True)
-            try:
-                self.task_list_scrolled.set_visible(False)
-                debug.log_event("REFRESH_TASKS", "Hidden task list after error")
-            except Exception:
-                pass
         finally:
             self._refresh_in_progress = False
+
+    def _update_empty_state(self):
+        """Give the placeholder a message that matches why the list is empty."""
+        if self.search_query:
+            self.empty_state.set_icon_name("system-search-symbolic")
+            self.empty_state.set_title(_("No Results Found"))
+            self.empty_state.set_description(_("Try a different search."))
+        elif self.current_list == "archived":
+            self.empty_state.set_icon_name(icons.name("list-archived"))
+            self.empty_state.set_title(_("No Archived Tasks"))
+            self.empty_state.set_description(_("Completed tasks are archived here."))
+        elif self.current_list == "favorites":
+            self.empty_state.set_icon_name(icons.name("list-favorites"))
+            self.empty_state.set_title(_("No Favorites"))
+            self.empty_state.set_description(_("Star a task to find it here."))
+        elif self.current_list == "overdue":
+            self.empty_state.set_icon_name(icons.name("list-overdue"))
+            self.empty_state.set_title(_("Nothing Overdue"))
+            self.empty_state.set_description(_("You are all caught up."))
+        else:
+            self.empty_state.set_icon_name(icons.name("list-archived"))
+            self.empty_state.set_title(_("No Tasks"))
+            self.empty_state.set_description(_("Tasks you add appear here."))
 
     def _update_list_actions(self):
         is_project = self.current_list.startswith("project_")
@@ -143,6 +160,7 @@ class TaskListMixin:
     def _clear_project_title_colors(self):
         for color in PROJECT_TEXT_COLORS:
             self.list_title_label.remove_css_class(f"text-color-{color}")
+        self.list_title_label.remove_css_class("text-color-black")
 
     def _update_list_title(self):
         if self.current_list.startswith("project_"):
@@ -160,7 +178,6 @@ class TaskListMixin:
             self.list_title_label.remove_css_class("overdue-title")
 
             if project_id == "inbox":
-                self.list_title_label.remove_css_class("text-color-purple")
                 self.list_title_label.add_css_class("text-color-black")
             elif project_color:
                 self.list_title_label.add_css_class(f"text-color-{project_color}")
@@ -269,11 +286,11 @@ class TaskListMixin:
             header_class = "date-header-no-date"
         elif date_key.startswith("hace_"):
             days = int(date_key.split("_")[1])
-            header_text = f"{days} {_('day' if days == 1 else 'days')} {_('ago')}"
+            header_text = ngettext("{} day ago", "{} days ago", days).format(days)
             header_class = "date-header-past"
         elif date_key.startswith("en_"):
             days = int(date_key.split("_")[1])
-            header_text = f"{_('In')} {days} {_('day' if days == 1 else 'days')}"
+            header_text = ngettext("In {} day", "In {} days", days).format(days)
             header_class = "date-header-future"
         else:
             header_text = date_key
@@ -292,6 +309,9 @@ class TaskListMixin:
         header_label.set_margin_bottom(6)
         header_label.set_margin_start(12)
         header_label.set_margin_end(12)
+        # Announce the group heading as such to assistive technologies.
+        header_label.set_accessible_role(Gtk.AccessibleRole.HEADING)
+        header_label.update_property([Gtk.AccessibleProperty.LEVEL], [3])
         header_row.set_child(header_label)
         return header_row
 
@@ -326,9 +346,9 @@ class TaskListMixin:
         if task["completed"]:
             row.add_css_class("dim-label")
 
-        handle = Gtk.Image.new_from_icon_name("drag-surface-symbolic")
+        handle = icons.image("drag-handle")
         handle.add_css_class("drag-handle-icon")
-        handle.set_pixel_size(24)
+        handle.set_tooltip_text(_("Drag to reorder"))
         drag_source = Gtk.DragSource()
         drag_source.set_actions(Gdk.DragAction.MOVE)
 
@@ -337,7 +357,7 @@ class TaskListMixin:
 
         def drag_begin(source, drag):
             paintable = Gtk.IconTheme.get_for_display(Gdk.Display.get_default()).lookup_icon(
-                "drag-surface-symbolic", None, 24, 1, Gtk.TextDirection.NONE, 0
+                icons.name("drag-handle"), None, 16, 1, Gtk.TextDirection.NONE, 0
             )
             drag_source.set_icon(paintable, 0, 0)
 
@@ -346,8 +366,10 @@ class TaskListMixin:
         handle.add_controller(drag_source)
         row.add_prefix(handle)
 
-        check = Gtk.CheckButton(active=task["completed"])
+        check = Gtk.CheckButton(active=task["completed"], valign=Gtk.Align.CENTER)
         check.add_css_class("task-checkbox")
+        check.set_tooltip_text(_("Mark as completed"))
+        check.update_property([Gtk.AccessibleProperty.LABEL], [_("Mark as completed")])
         check.connect("toggled", lambda w, t=task: self.on_task_toggle(t))
         row.add_prefix(check)
 
@@ -363,12 +385,12 @@ class TaskListMixin:
             row.set_subtitle(_("Subtasks: {}/{}").format(completed_subtasks, len(subtasks)))
 
         is_favorite = task.get("favorite", False)
-        star_icon = "folder-favorites-symbolic" if is_favorite else "favorite-symbolic"
-        star_image = Gtk.Image.new_from_icon_name(star_icon)
-        star_image.set_pixel_size(24)
-        star_button = Gtk.Button()
-        star_button.set_child(star_image)
+        star_button = Gtk.Button(valign=Gtk.Align.CENTER)
+        star_button.set_child(icons.image("star-on" if is_favorite else "star-off"))
         star_button.add_css_class("flat")
+        star_label = _("Remove from favorites") if is_favorite else _("Add to favorites")
+        star_button.set_tooltip_text(star_label)
+        star_button.update_property([Gtk.AccessibleProperty.LABEL], [star_label])
         if is_favorite:
             star_button.add_css_class("favorite-active")
 
@@ -394,6 +416,8 @@ class TaskListMixin:
             debug.log_event("TASK_TOGGLE", f"Task completion changed to {updated_task.get('completed', False)}")
             self.refresh_task_list()
             self.refresh_sidebar()
+            if self.current_task_info and self.current_task_info.get("id") == task.get("id"):
+                self.refresh_current_task_panel()
 
     @debug_method("on_toggle_favorite")
     def on_toggle_favorite(self, task):
@@ -414,8 +438,12 @@ class TaskListMixin:
 
             new_favorite = updated_task.get("favorite", False)
             debug.log_event("FAVORITE_TOGGLE", f"Task {task_id} favorite changing from {current_favorite} to {new_favorite}")
-            new_state = _("added to") if new_favorite else _("removed from")
-            print(f"{_('Task')} '{task_title}' {new_state} {_('favorites')}")
+            # Feedback goes to a toast: the previous print() went to stdout,
+            # where the user never saw it.
+            if new_favorite:
+                self.show_toast(_("“{}” added to Favorites").format(task_title))
+            else:
+                self.show_toast(_("“{}” removed from Favorites").format(task_title))
             GLib.idle_add(self._delayed_refresh_after_favorite, task_id, task_title, new_favorite)
         except Exception as exc:
             debug.log_event("FAVORITE_TOGGLE", f"ERROR in on_toggle_favorite for task {task_id}: {exc}", stack_info=True)
@@ -441,12 +469,11 @@ class TaskListMixin:
             debug.log_event("UI_STATE", f"Current list: {self.current_list}")
             debug.log_event(
                 "UI_STATE",
-                f"Task info panel visible: {getattr(self, 'task_info_panel', None) and self.task_info_panel.get_visible()}",
+                f"Details panel shown: {getattr(self, 'detail_split', None) and self.detail_split.get_show_sidebar()}",
             )
             debug.log_event("UI_STATE", f"Current task info: {self.current_task_info.get('title') if self.current_task_info else None}")
             debug.log_event("UI_STATE", f"Window size: {self.get_width()}x{self.get_height()}")
             debug.log_event("UI_STATE", f"Total tasks: {len(self.task_manager.tasks.get('all_tasks', []))}")
-            debug.log_event("UI_STATE", f"UI state valid: {getattr(self, '_ui_state_valid', True)}")
             debug.log_event("UI_STATE", f"Refresh in progress: {getattr(self, '_refresh_in_progress', False)}")
             debug.log_event("UI_STATE", f"Updating favorite: {getattr(self, '_updating_favorite', False)}")
             debug.log_event("UI_STATE", "================================")
@@ -461,9 +488,7 @@ class TaskListMixin:
             self._refreshing_sidebar = False
             self._in_cleanup = False
 
-            if hasattr(self, "task_info_panel") and self.task_info_panel.get_visible():
-                self.on_close_task_info(None)
-
+            self.close_task_details()
             self.current_task_info = None
             GLib.idle_add(self._safe_ui_refresh)
             debug.log_event("RECOVERY", "UI recovery initiated")

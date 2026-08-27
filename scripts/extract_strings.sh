@@ -10,12 +10,13 @@ find "$ROOT_DIR/src/todo_list" -name "*.py" | sort > "$TEMP_FILE"
 
 xgettext --language=Python \
          --keyword=_ \
+         --keyword=ngettext:1,2 \
          --output="$ROOT_DIR/locale/todo-list.pot" \
          --from-code=UTF-8 \
          --add-comments \
          --copyright-holder="pabmartine" \
          --package-name="Todo List" \
-         --package-version="1.0.4" \
+         --package-version="1.4.0" \
          --files-from="$TEMP_FILE"
 
 echo "Archivo .pot generado en locale/todo-list.pot"

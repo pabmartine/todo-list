@@ -12,11 +12,17 @@ echo "Preparando construccion de Flatpak..."
 
 rm -rf "$BUILD_DIR" "$REPO_DIR"
 
-echo "Verificando runtimes de Flatpak..."
-if ! flatpak list --runtime | grep -q "org.gnome.Platform.*48"; then
-    echo "Instalando runtime de GNOME Platform 48..."
-    flatpak install --user flathub org.gnome.Platform//48 org.gnome.Sdk//48 -y
-fi
+# La version se lee del manifiesto: estaba fijada a 48 mientras el manifiesto
+# declaraba otra, asi que la comprobacion pasaba sin tener el runtime correcto.
+RUNTIME_VERSION="$(sed -n 's/^runtime-version:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}[[:space:]]*$/\1/p' "$MANIFEST")"
+
+echo "Verificando runtimes de Flatpak (version $RUNTIME_VERSION)..."
+for rt in org.gnome.Platform org.gnome.Sdk; do
+    if ! flatpak info "$rt//$RUNTIME_VERSION" >/dev/null 2>&1; then
+        echo "Instalando $rt//$RUNTIME_VERSION..."
+        flatpak install --user flathub "$rt//$RUNTIME_VERSION" -y
+    fi
+done
 
 echo "Compilando traducciones..."
 bash "$ROOT_DIR/scripts/compile_translations.sh"
@@ -42,5 +48,6 @@ echo
 echo "  Ejecutar la app instalada:"
 echo "    flatpak run $APP_ID"
 echo
-echo "  Ejecutar directamente desde el repositorio local generado:"
-echo "    flatpak run --user --sideload-repo=\"$REPO_DIR\" $APP_ID"
+echo "  Ejecutar directamente usando flatpak-builder:"
+echo "    flatpak-builder --run \"$BUILD_DIR\" \"$MANIFEST\" todo-list"
+

@@ -63,12 +63,14 @@ Drag a task by its handle and drop it over another task in the same visible list
 
 ## Preferences
 
-From the application menu you can change:
+From the application menu (or Ctrl+comma) you can change:
 
 - interface language
-- dark theme
+- style: follow the system preference, or force light or dark
 
 Window size and selected list are remembered automatically.
+
+Press Ctrl+question to see every keyboard shortcut.
 
 ## Import And Export
 

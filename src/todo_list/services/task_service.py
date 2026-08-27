@@ -272,6 +272,18 @@ class TaskService:
             self.save_tasks()
         return deleted
 
+    def restore_task(self, task):
+        """Put a previously deleted task back, so a delete can be undone."""
+        if not task or task.get("id") is None:
+            return None
+        if self.task_exists(task.get("id")):
+            return self.find_task(task.get("id"))
+
+        restored = dict(task)
+        self.tasks.setdefault("all_tasks", []).append(restored)
+        self.save_tasks()
+        return restored
+
     def clear_archived_tasks(self):
         all_tasks = self.tasks.get("all_tasks", [])
         original_count = len(all_tasks)
