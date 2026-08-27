@@ -28,6 +28,12 @@ class SidebarMixin:
 
         sidebar_toolbar = Adw.ToolbarView()
         sidebar_header = Adw.HeaderBar()
+        # The HIG places the primary menu above the sidebar list when a window
+        # has a sidebar, rather than at the end of the content header bar: the
+        # menu holds app-wide actions, and next to the window controls it reads
+        # as a window control. It also keeps the menu on the top-level view
+        # once the split view collapses and the sidebar becomes its own page.
+        sidebar_header.pack_end(self._create_menu_button())
         sidebar_toolbar.add_top_bar(sidebar_header)
 
         sidebar_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -185,15 +191,8 @@ class SidebarMixin:
         self.content_page.set_tag("content")
 
         self.content_toolbar = Adw.ToolbarView()
+        # The primary menu lives above the sidebar list, see create_sidebar().
         content_header = Adw.HeaderBar()
-
-        menu_button = Gtk.MenuButton(icon_name="open-menu-symbolic")
-        menu_button.set_tooltip_text(_("Main Menu"))
-        menu_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Main Menu")])
-        self.menu_model = Gio.Menu()
-        self.populate_menu_model()
-        menu_button.set_menu_model(self.menu_model)
-        content_header.pack_end(menu_button)
         self.content_toolbar.add_top_bar(content_header)
 
         self.main_area = Adw.Clamp()
@@ -299,6 +298,15 @@ class SidebarMixin:
         self.task_area_stack.add_named(self.empty_state, "empty")
         self.task_area_stack.set_vexpand(True)
         return self.task_area_stack
+
+    def _create_menu_button(self):
+        menu_button = Gtk.MenuButton(icon_name="open-menu-symbolic")
+        menu_button.set_tooltip_text(_("Main Menu"))
+        menu_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Main Menu")])
+        self.menu_model = Gio.Menu()
+        self.populate_menu_model()
+        menu_button.set_menu_model(self.menu_model)
+        return menu_button
 
     def populate_menu_model(self):
         """(Re)build the primary menu.
