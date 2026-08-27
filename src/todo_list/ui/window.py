@@ -165,11 +165,18 @@ class TaskManagerWindow(
         `self.get_width() < 600` comparisons ignored; those also never
         re-evaluated when the window was resized.
         """
-        overlay_bp = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 900sp"))
-        overlay_bp.add_setter(self.detail_split, "collapsed", True)
-        self.add_breakpoint(overlay_bp)
+        # Only one breakpoint applies at a time: AdwBreakpointBin uses the last
+        # added one whose condition matches, not every matching one. So the
+        # conditions are mutually exclusive and the narrower breakpoint repeats
+        # the setters of the wider one.
+        medium_bp = Adw.Breakpoint.new(
+            Adw.BreakpointCondition.parse("min-width: 601sp and max-width: 900sp")
+        )
+        medium_bp.add_setter(self.detail_split, "collapsed", True)
+        self.add_breakpoint(medium_bp)
 
         narrow_bp = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 600sp"))
+        narrow_bp.add_setter(self.detail_split, "collapsed", True)
         narrow_bp.add_setter(self.split_view, "collapsed", True)
         self.add_breakpoint(narrow_bp)
 
