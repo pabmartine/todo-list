@@ -23,7 +23,32 @@ Todo List is a desktop application focused on simple task and project management
 - **GNOME HIG & Adwaita**: Native look and feel, responsive design with adaptive split view, light/dark/system theme support, and full keyboard shortcuts.
 - **Multilingual**: Interface available in English and Spanish.
 
-## Requirements
+## Installation
+
+### Flatpak (Recommended)
+
+You can install Todo List directly from the personal Flatpak repository:
+
+```bash
+# Add the repository (one-time setup)
+flatpak remote-add --user --if-not-exists --no-gpg-verify pabmartine-repo https://pabmartine.github.io/flatpak-repository/
+
+# Install the application
+flatpak install pabmartine-repo com.pabmartine.TodoList
+
+# Run
+flatpak run com.pabmartine.TodoList
+```
+
+Alternatively, download the standalone `.flatpak` bundle from the latest [GitHub Release](https://github.com/pabmartine/todo-list/releases/latest) and install it:
+
+```bash
+flatpak install --user com.pabmartine.TodoList.flatpak
+```
+
+## Run From Source
+
+### Requirements
 
 - Python 3.10+
 - GTK 4

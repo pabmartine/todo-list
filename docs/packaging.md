@@ -27,6 +27,21 @@ The Flatpak launcher:
 - runs `python3 -m todo_list.main`
 - installs desktop resources and translations into standard Flatpak locations
 
+## Flatpak Repository
+
+Todo List is distributed through the personal OSTree repository:
+
+- **Repository:** [pabmartine/flatpak-repository](https://github.com/pabmartine/flatpak-repository)
+- **Endpoint URL:** `https://pabmartine.github.io/flatpak-repository/`
+- **Remote Name:** `pabmartine-repo`
+
+To configure and install:
+
+```bash
+flatpak remote-add --user --if-not-exists --no-gpg-verify pabmartine-repo https://pabmartine.github.io/flatpak-repository/
+flatpak install pabmartine-repo com.pabmartine.TodoList
+```
+
 ## Output Artifacts
 
 The Flatpak build may generate local artifacts such as:
