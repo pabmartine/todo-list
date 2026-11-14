@@ -50,6 +50,23 @@
 
   <!-- Releases must be listed newest first. -->
   <releases>
+    <release version="1.5.0" date="2026-11-12">
+      <description>
+        <p>Interactive Kanban board and task lifecycle management.</p>
+        <p>Added:</p>
+        <ul>
+          <li>Interactive 3-column Kanban view (Pending, In progress, Completed) with drag-and-drop</li>
+          <li>View switcher toggle buttons in the header bar to switch between List and Kanban views</li>
+          <li>Task status lifecycle with manual status selector in task details</li>
+          <li>Enforced project selection requirement when creating tasks outside of a project</li>
+        </ul>
+        <p>Changed:</p>
+        <ul>
+          <li>Cards in Kanban view display project badges and support drag-and-drop status transitions</li>
+          <li>Persistent task selection highlighting across views while the detail panel is open</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.4.0" date="2026-08-27">
       <description>
         <p>Alignment with the GNOME Human Interface Guidelines and libadwaita.</p>

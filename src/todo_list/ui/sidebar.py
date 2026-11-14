@@ -165,6 +165,12 @@ class SidebarMixin:
         if not list_id or list_id == self.current_list:
             return
 
+        if self.is_project_selection_pending():
+            self.show_toast(_("Please select a project for the task first"))
+            self.highlight_project_requirement()
+            GLib.idle_add(self.select_current_list)
+            return
+
         self._cleanup_ui_state()
 
         if listbox == self.main_list_group:
@@ -174,6 +180,8 @@ class SidebarMixin:
 
         self.current_list = list_id
         self.refresh_task_list()
+        if hasattr(self, "refresh_kanban_board"):
+            self.refresh_kanban_board()
         self.update_header_title()
 
         self.close_task_details()
@@ -194,6 +202,27 @@ class SidebarMixin:
         # The primary menu lives above the sidebar list, see create_sidebar().
         content_header = Adw.HeaderBar()
         self.content_toolbar.add_top_bar(content_header)
+
+        # Segmented view switcher buttons in content_header
+        switcher_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        switcher_box.add_css_class("linked")
+
+        self.list_view_btn = Gtk.ToggleButton()
+        self.list_view_btn.set_icon_name(icons.name("view-list"))
+        self.list_view_btn.set_tooltip_text(_("List view"))
+        self.list_view_btn.update_property([Gtk.AccessibleProperty.LABEL], [_("List view")])
+        self.list_view_btn.connect("toggled", self.on_view_switcher_toggled)
+
+        self.kanban_view_btn = Gtk.ToggleButton()
+        self.kanban_view_btn.set_group(self.list_view_btn)
+        self.kanban_view_btn.set_icon_name(icons.name("view-kanban"))
+        self.kanban_view_btn.set_tooltip_text(_("Kanban view"))
+        self.kanban_view_btn.update_property([Gtk.AccessibleProperty.LABEL], [_("Kanban view")])
+        self.kanban_view_btn.connect("toggled", self.on_view_switcher_toggled)
+
+        switcher_box.append(self.list_view_btn)
+        switcher_box.append(self.kanban_view_btn)
+        content_header.set_title_widget(switcher_box)
 
         self.main_area = Adw.Clamp()
         self.main_area.set_maximum_size(840)
@@ -268,7 +297,22 @@ class SidebarMixin:
         self.new_task_entry.update_property([Gtk.AccessibleProperty.LABEL], [_("New task")])
         content_box.append(self.new_task_entry)
 
-        self.content_toolbar.set_content(self.main_area)
+        self.kanban_area = self.create_kanban_area()
+
+        self.view_stack = Gtk.Stack()
+        self.view_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        self.view_stack.add_named(self.main_area, "list")
+        self.view_stack.add_named(self.kanban_area, "kanban")
+
+        initial_view = getattr(self, "current_view", "list")
+        if initial_view == "kanban":
+            self.kanban_view_btn.set_active(True)
+            self.view_stack.set_visible_child_name("kanban")
+        else:
+            self.list_view_btn.set_active(True)
+            self.view_stack.set_visible_child_name("list")
+
+        self.content_toolbar.set_content(self.view_stack)
         # The page's child is set by setup_ui(), which wraps this toolbar in the
         # details overlay split view. Parenting it here would make
         # AdwOverlaySplitView.set_content() fail.
@@ -342,15 +386,50 @@ class SidebarMixin:
         self.sort_ascending = not self.sort_ascending
         self.update_sort_button()
         self.refresh_task_list()
+        if hasattr(self, "refresh_kanban_board"):
+            self.refresh_kanban_board()
 
     def on_search_changed(self, entry):
         self.search_query = entry.get_text().strip()
+        if (
+            hasattr(self, "kanban_search_entry")
+            and self.kanban_search_entry.get_text().strip() != self.search_query
+        ):
+            self.kanban_search_entry.set_text(self.search_query)
         self.refresh_task_list()
+        if hasattr(self, "refresh_kanban_board"):
+            self.refresh_kanban_board()
 
     def start_search(self):
         """Focus the search entry (Ctrl+F)."""
-        if hasattr(self, "search_entry"):
+        if getattr(self, "current_view", "list") == "kanban" and hasattr(self, "kanban_search_entry"):
+            self.kanban_search_entry.grab_focus()
+        elif hasattr(self, "search_entry"):
             self.search_entry.grab_focus()
+
+    def on_view_switcher_toggled(self, button):
+        if not button.get_active():
+            return
+        if button == getattr(self, "list_view_btn", None):
+            self.set_active_view("list")
+        elif button == getattr(self, "kanban_view_btn", None):
+            self.set_active_view("kanban")
+
+    def set_active_view(self, view_name):
+        self.current_view = view_name
+        if hasattr(self, "config"):
+            self.config.set("current_view", view_name)
+        if hasattr(self, "view_stack"):
+            self.view_stack.set_visible_child_name(view_name)
+        if view_name == "list":
+            if hasattr(self, "list_view_btn") and not self.list_view_btn.get_active():
+                self.list_view_btn.set_active(True)
+            self.refresh_task_list()
+        else:
+            if hasattr(self, "kanban_view_btn") and not self.kanban_view_btn.get_active():
+                self.kanban_view_btn.set_active(True)
+            if hasattr(self, "refresh_kanban_board"):
+                self.refresh_kanban_board()
 
     @debug_method("refresh_sidebar")
     def refresh_sidebar(self):

@@ -24,6 +24,7 @@ def migrate_loaded_data(data, projects):
         task.setdefault("favorite", False)
         task.setdefault("sort_order", 0)
         task.setdefault("subtasks", [])
+        task.setdefault("status", "completed" if task.get("completed", False) else "pending")
         normalized_subtasks = []
         for index, subtask in enumerate(task.get("subtasks", []), start=1):
             if not isinstance(subtask, dict):

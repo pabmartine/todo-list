@@ -15,6 +15,7 @@ class Task:
     favorite: bool
     sort_order: int
     subtasks: list[dict]
+    status: str = "pending"
 
     def to_dict(self):
         return {
@@ -30,4 +31,5 @@ class Task:
             "favorite": self.favorite,
             "sort_order": self.sort_order,
             "subtasks": self.subtasks,
+            "status": self.status,
         }

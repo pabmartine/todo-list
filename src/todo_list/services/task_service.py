@@ -98,15 +98,18 @@ class TaskService:
                 max_id = task.get("id", 0)
         return max_id + 1
 
-    def add_task(self, list_id, title, due_date=None, priority=0, notes="", project=None, effective_date=None):
+    def add_task(self, list_id, title, due_date=None, priority=0, notes="", project=None, effective_date=None, status="pending"):
         if project is None:
             inbox_project = self.get_inbox_project()
             project = inbox_project["name"] if inbox_project else _("Inbox")
 
+        if status not in ("pending", "in_progress", "completed"):
+            status = "pending"
+
         new_task = Task(
             id=self.get_next_id(),
             title=title,
-            completed=False,
+            completed=(status == "completed"),
             priority=priority,
             notes=notes,
             project=project,
@@ -116,9 +119,12 @@ class TaskService:
             favorite=False,
             sort_order=0,
             subtasks=[],
+            status=status,
         )
-        self.tasks.setdefault("all_tasks", []).append(new_task.to_dict())
+        task_dict = new_task.to_dict()
+        self.tasks.setdefault("all_tasks", []).append(task_dict)
         self.save_tasks()
+        return task_dict
 
     def get_tasks(self, list_id):
         all_tasks = self.tasks.get("all_tasks", [])
@@ -208,6 +214,85 @@ class TaskService:
         except (ValueError, TypeError):
             return None
 
+    def _get_kanban_base_tasks(self, list_id):
+        all_tasks = self.tasks.get("all_tasks", [])
+        today = datetime.date.today()
+
+        if list_id == "today":
+            return [task for task in all_tasks if self._task_date(task) == today]
+        if list_id == "next7":
+            result = []
+            for task in all_tasks:
+                effective_date = self._task_date(task)
+                if not effective_date:
+                    continue
+                days_diff = (effective_date - today).days
+                if 1 <= days_diff <= 7:
+                    result.append(task)
+            return result
+        if list_id == "overdue":
+            return [
+                task
+                for task in all_tasks
+                if self._task_date(task) is not None and self._task_date(task) < today
+            ]
+        if list_id == "all":
+            return list(all_tasks)
+        if list_id == "favorites":
+            return [task for task in all_tasks if task.get("favorite", False)]
+        if list_id == "archived":
+            return [task for task in all_tasks if task.get("completed", False)]
+        if list_id.startswith("project_"):
+            project_id = list_id.replace("project_", "")
+            project = self.get_project_by_id(project_id)
+            if not project:
+                return []
+
+            project_name = project["name"]
+            if project_id == "inbox":
+                inbox_variants = {"Inbox", "Bandeja de entrada", "Bandeja de Entrada", "inbox", project_name}
+                return [
+                    task
+                    for task in all_tasks
+                    if (task.get("project") == project_name or task.get("project") in inbox_variants)
+                ]
+            return [task for task in all_tasks if task.get("project") == project_name]
+        return []
+
+    def get_kanban_tasks(self, list_id, query=None):
+        tasks = self._get_kanban_base_tasks(list_id)
+        if query:
+            normalized_query = query.strip().casefold()
+            tasks = [
+                task
+                for task in tasks
+                if normalized_query in " ".join(
+                    [
+                        task.get("title", ""),
+                        task.get("notes", ""),
+                        task.get("project", ""),
+                        " ".join(subtask.get("title", "") for subtask in task.get("subtasks", [])),
+                    ]
+                ).casefold()
+            ]
+
+        kanban_data = {
+            "pending": [],
+            "in_progress": [],
+            "completed": [],
+        }
+
+        for task in tasks:
+            status = task.get("status")
+            if not status or status not in kanban_data:
+                status = "completed" if task.get("completed", False) else "pending"
+            kanban_data[status].append(task)
+
+        for col in kanban_data:
+            kanban_data[col].sort(key=lambda t: (t.get("sort_order", 0), t.get("id", 0)))
+
+        return kanban_data
+
     def get_task_count(self, list_id):
         return len(self.get_tasks(list_id))
 
@@ -225,6 +310,21 @@ class TaskService:
         if not task:
             return None
 
+        if "status" in changes:
+            status = changes["status"]
+            if status not in ("pending", "in_progress", "completed"):
+                status = "pending"
+            changes["status"] = status
+            if status == "completed":
+                changes["completed"] = True
+            else:
+                changes["completed"] = False
+        elif "completed" in changes:
+            if changes["completed"]:
+                changes["status"] = "completed"
+            elif task.get("status") == "completed":
+                changes["status"] = "pending"
+
         task.update(changes)
         self.save_tasks()
         return task
@@ -232,6 +332,9 @@ class TaskService:
     def ensure_task_defaults(self):
         changed = False
         for task in self.tasks.get("all_tasks", []):
+            if "status" not in task:
+                task["status"] = "completed" if task.get("completed", False) else "pending"
+                changed = True
             if "favorite" not in task:
                 task["favorite"] = False
                 changed = True
@@ -297,7 +400,9 @@ class TaskService:
         task = self.find_task(task_id)
         if not task:
             return None
-        task["completed"] = not task.get("completed", False)
+        new_completed = not task.get("completed", False)
+        task["completed"] = new_completed
+        task["status"] = "completed" if new_completed else "pending"
         self.save_tasks()
         return task
 
@@ -333,6 +438,29 @@ class TaskService:
 
         self.save_tasks()
         return True
+
+    def move_task_kanban(self, task_id, new_status, target_task_id=None):
+        task = self.find_task(task_id)
+        if not task:
+            return None
+        if new_status not in ("pending", "in_progress", "completed"):
+            return None
+
+        self.update_task(task_id, status=new_status)
+        if target_task_id and target_task_id != task_id:
+            target_task = self.find_task(target_task_id)
+            if target_task:
+                target_order = target_task.get("sort_order", 0)
+                task["sort_order"] = target_order
+                for other in self.tasks.get("all_tasks", []):
+                    if (
+                        other.get("id") != task_id
+                        and other.get("status") == new_status
+                        and other.get("sort_order", 0) >= target_order
+                    ):
+                        other["sort_order"] = other.get("sort_order", 0) + 1
+                self.save_tasks()
+        return task
 
     def delete_project(self, project_id):
         if project_id == "inbox":

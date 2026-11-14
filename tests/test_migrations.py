@@ -1,5 +1,6 @@
 import unittest
 
+from todo_list.core.i18n import translate as _
 from todo_list.repositories.migrations import migrate_loaded_data, normalize_inbox_projects
 
 
@@ -54,17 +55,17 @@ class MigrationTest(unittest.TestCase):
         normalized_tasks, normalized_projects = normalize_inbox_projects(tasks, projects)
 
         self.assertEqual(normalized_projects[0]["id"], "inbox")
-        self.assertEqual(normalized_projects[0]["name"], "Inbox")
+        self.assertEqual(normalized_projects[0]["name"], _("Inbox"))
         self.assertEqual(normalized_projects[0]["color"], "black")
         self.assertEqual(len([project for project in normalized_projects if project["id"] == "inbox"]), 1)
-        self.assertEqual(normalized_tasks["all_tasks"][0]["project"], "Inbox")
-        self.assertEqual(normalized_tasks["all_tasks"][1]["project"], "Inbox")
+        self.assertEqual(normalized_tasks["all_tasks"][0]["project"], _("Inbox"))
+        self.assertEqual(normalized_tasks["all_tasks"][1]["project"], _("Inbox"))
 
     def test_normalize_inbox_projects_creates_inbox_when_missing(self):
         tasks = {"all_tasks": []}
         projects = [{"id": "work", "name": "Work", "color": "green"}]
 
-        _, normalized_projects = normalize_inbox_projects(tasks, projects)
+        unused_tasks, normalized_projects = normalize_inbox_projects(tasks, projects)
 
         self.assertEqual(normalized_projects[0]["id"], "inbox")
-        self.assertEqual(normalized_projects[0]["name"], "Inbox")
+        self.assertEqual(normalized_projects[0]["name"], _("Inbox"))

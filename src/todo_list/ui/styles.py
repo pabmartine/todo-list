@@ -37,6 +37,17 @@ APP_CSS = """
     background-color: alpha(@window_fg_color, 0.05);
 }
 
+.task-list > row:not(.date-header-row):selected,
+.task-list > row:not(.date-header-row).is-selected {
+    background-color: alpha(@window_fg_color, 0.09);
+    color: inherit;
+}
+
+.task-list > row:not(.date-header-row):selected:hover,
+.task-list > row:not(.date-header-row).is-selected:hover {
+    background-color: alpha(@window_fg_color, 0.13);
+}
+
 .task-list > row.date-header-row {
     background-color: transparent;
 }
@@ -66,6 +77,16 @@ APP_CSS = """
 }
 
 .overdue-title {
+    color: @error_color;
+}
+
+row.error {
+    outline: 2px solid @error_color;
+    outline-offset: -2px;
+}
+
+row.error .title,
+row.error .subtitle {
     color: @error_color;
 }
 
@@ -195,4 +216,90 @@ APP_CSS = """
 .text-color-sky       { color: #87CEEB; }
 .text-color-emerald   { color: #2E8B57; }
 .text-color-ruby      { color: #E0115F; }
+
+/*
+ * Kanban Board
+ */
+.kanban-board-wrapper {
+    padding: 0 16px 16px 16px;
+}
+
+.kanban-column {
+    background-color: alpha(@window_fg_color, 0.03);
+    border: 1px solid alpha(@borders, 0.4);
+    border-radius: 12px;
+    padding: 12px;
+    min-width: 260px;
+    transition: all 200ms ease;
+}
+
+.kanban-column.kanban-drop-target {
+    border-color: @accent_color;
+    background-color: alpha(@accent_color, 0.08);
+}
+
+.kanban-column-header {
+    padding-bottom: 8px;
+    border-bottom: 1px solid alpha(@borders, 0.2);
+}
+
+.kanban-column-title {
+    font-weight: bold;
+    font-size: 1.05em;
+}
+
+.kanban-badge {
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.kanban-badge-pending {
+    background-color: alpha(@window_fg_color, 0.1);
+    color: inherit;
+}
+
+.kanban-badge-progress {
+    background-color: alpha(@accent_color, 0.2);
+    color: @accent_color;
+}
+
+.kanban-badge-completed {
+    background-color: alpha(@success_color, 0.2);
+    color: @success_color;
+}
+
+.kanban-card-list {
+    background: transparent;
+}
+
+.kanban-card-list > row {
+    background: transparent;
+    border: none;
+    padding: 4px 0;
+}
+
+.kanban-card {
+    border-radius: 8px;
+    padding: 10px 12px;
+    background-color: @card_bg_color;
+    box-shadow: 0 1px 3px alpha(@window_fg_color, 0.08);
+    transition: all 150ms ease;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 2px 6px alpha(@window_fg_color, 0.15);
+}
+
+.kanban-card.is-selected {
+    outline: 2px solid @accent_color;
+    outline-offset: -1px;
+    background-color: alpha(@accent_color, 0.08);
+}
+
+.kanban-empty-placeholder {
+    padding: 24px 12px;
+    opacity: 0.5;
+}
 """

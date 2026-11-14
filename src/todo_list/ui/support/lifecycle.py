@@ -1,6 +1,7 @@
 from gi.repository import Gtk
 
 from ...core.debug import debug, debug_method
+from ...core.i18n import translate as _
 
 
 class WindowLifecycleMixin:
@@ -26,6 +27,10 @@ class WindowLifecycleMixin:
     @debug_method("on_window_close")
     def on_window_close(self, window):
         debug.log_event("WINDOW", "Window closing, saving configuration")
+        if hasattr(self, "is_project_selection_pending") and self.is_project_selection_pending():
+            inbox_project = self.task_manager.get_inbox_project()
+            inbox_name = inbox_project["name"] if inbox_project else _("Inbox")
+            self.task_manager.update_task(self.current_task_info["id"], project=inbox_name)
         width = self.get_width()
         height = self.get_height()
         self.config.set("window_width", width)

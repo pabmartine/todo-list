@@ -33,6 +33,11 @@ ICON_NAMES = {
     "star-on": ["folder-favorites-symbolic", "starred-symbolic"],
     "star-off": ["non-starred-symbolic"],
     "folder": ["folder-symbolic"],
+    "view-list": ["view-list-bullet-symbolic", "view-list-symbolic"],
+    "view-kanban": ["view-column-symbolic", "view-grid-symbolic"],
+    "kanban-pending": ["document-open-symbolic", "radio-symbolic", "circle-symbolic"],
+    "kanban-progress": ["system-run-symbolic", "media-playback-start-symbolic", "emblem-synchronizing-symbolic"],
+    "kanban-completed": ["emblem-ok-symbolic", "task-complete-symbolic", "checkbox-checked-symbolic"],
 }
 
 _resolved = {}

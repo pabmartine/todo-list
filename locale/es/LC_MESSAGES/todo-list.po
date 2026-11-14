@@ -4,7 +4,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Todo List 1.4.0\n"
+"Project-Id-Version: Todo List 1.5.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-27 08:02+0200\n"
 "PO-Revision-Date: 2026-08-26 00:00+0200\n"
@@ -637,6 +637,54 @@ msgstr "«{}» añadida a Favoritas"
 #: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:445
 msgid "“{}” removed from Favorites"
 msgstr "«{}» eliminada de Favoritas"
+
+msgid "Select a project…"
+msgstr "Seleccionar un proyecto…"
+
+msgid "Selection required"
+msgstr "Selección obligatoria"
+
+msgid "Please select a project for the task first"
+msgstr "Debes seleccionar un proyecto para la tarea primero"
+
+msgid "Please select a project for the new task"
+msgstr "Por favor, selecciona un proyecto para la nueva tarea"
+
+msgid "Please select a project for the current task first"
+msgstr "Debes seleccionar un proyecto para la tarea actual primero"
+
+msgid "Assigned to “{}”"
+msgstr "Asignada a «{}»"
+
+msgid "No project"
+msgstr "Sin proyecto"
+
+msgid "Status"
+msgstr "Estado"
+
+msgid "Pending"
+msgstr "Pendiente"
+
+msgid "In progress"
+msgstr "En proceso"
+
+msgid "List view"
+msgstr "Vista de lista"
+
+msgid "Kanban view"
+msgstr "Vista Kanban"
+
+msgid "Drag to move"
+msgstr "Arrastrar para mover"
+
+msgid "“{}” moved to {}"
+msgstr "«{}» movida a {}"
+
+msgid "Mark as incomplete"
+msgstr "Marcar como incompleta"
+
+msgid "No tasks"
+msgstr "Sin tareas"
 
 #~ msgid "day"
 #~ msgstr "día"

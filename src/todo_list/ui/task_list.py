@@ -114,11 +114,46 @@ class TaskListMixin:
                 child = child.get_next_sibling()
             debug.log_event("REFRESH_TASKS", f"Created {final_row_count} new rows")
             self.update_header_title()
+            self.update_task_list_selection()
             debug.log_event("REFRESH_TASKS", "=== REFRESH COMPLETED SUCCESSFULLY ===")
         except Exception as exc:
             debug.log_event("REFRESH_TASKS", f"=== REFRESH ERROR: {exc} ===", stack_info=True)
         finally:
             self._refresh_in_progress = False
+
+        if hasattr(self, "refresh_kanban_board"):
+            self.refresh_kanban_board()
+
+    def update_task_list_selection(self):
+        if not hasattr(self, "task_list") or not self.task_list:
+            return
+
+        is_panel_shown = (
+            hasattr(self, "detail_split")
+            and self.detail_split.get_show_sidebar()
+            and self.current_task_info is not None
+        )
+        target_id_str = str(self.current_task_info.get("id")) if is_panel_shown else None
+
+        child = self.task_list.get_first_child()
+        selected_widget = None
+        while child:
+            if hasattr(child, "get_name") and hasattr(child, "remove_css_class"):
+                row_id = child.get_name()
+                if target_id_str and row_id == target_id_str:
+                    child.add_css_class("is-selected")
+                    selected_widget = child
+                else:
+                    child.remove_css_class("is-selected")
+            child = child.get_next_sibling()
+
+        if selected_widget:
+            self.task_list.select_row(selected_widget)
+        else:
+            self.task_list.unselect_all()
+
+        if hasattr(self, "update_kanban_selection"):
+            self.update_kanban_selection()
 
     def _update_empty_state(self):
         """Give the placeholder a message that matches why the list is empty."""
@@ -346,6 +381,14 @@ class TaskListMixin:
         if task["completed"]:
             row.add_css_class("dim-label")
 
+        is_panel_shown = (
+            hasattr(self, "detail_split")
+            and self.detail_split.get_show_sidebar()
+            and self.current_task_info is not None
+        )
+        if is_panel_shown and task_id is not None and str(task_id) == str(self.current_task_info.get("id")):
+            row.add_css_class("is-selected")
+
         handle = icons.image("drag-handle")
         handle.add_css_class("drag-handle-icon")
         handle.set_tooltip_text(_("Drag to reorder"))
@@ -378,6 +421,11 @@ class TaskListMixin:
             project_label.add_css_class("dim-label")
             project_label.add_css_class("caption")
             row.add_suffix(project_label)
+        else:
+            no_project_label = Gtk.Label(label=_("No project"))
+            no_project_label.add_css_class("caption")
+            no_project_label.add_css_class("date-header-past")
+            row.add_suffix(no_project_label)
 
         subtasks = task.get("subtasks", [])
         if subtasks:
@@ -527,6 +575,11 @@ class TaskListMixin:
         if not text:
             return
 
+        if self.is_project_selection_pending():
+            self.show_toast(_("Please select a project for the current task first"))
+            self.highlight_project_requirement()
+            return
+
         list_to_add = self.current_list
         effective_date = None
         if self.current_list == "today":
@@ -542,17 +595,34 @@ class TaskListMixin:
                 datetime.time.min,
             ).isoformat()
 
-        if self.current_list.startswith("project_"):
+        is_in_project = self.current_list.startswith("project_")
+        if is_in_project:
             project_id = self.current_list.replace("project_", "")
             project = self.task_manager.get_project_by_id(project_id)
             project_name = project["name"] if project else _("Inbox")
+            must_select_project = False
         else:
             inbox_project = self.task_manager.get_inbox_project()
-            project_name = inbox_project["name"] if inbox_project else _("Inbox")
+            inbox_name = inbox_project["name"] if inbox_project else _("Inbox")
+            custom_projects = [p for p in self.task_manager.projects if p.get("id") != "inbox"]
+            if custom_projects:
+                project_name = ""
+                must_select_project = True
+            else:
+                project_name = inbox_name
+                must_select_project = False
 
-        debug.log_event("NEW_TASK", f"Adding to project: {project_name}, Date: {effective_date}")
-        self.task_manager.add_task(list_to_add, text, project=project_name, effective_date=effective_date)
+        debug.log_event(
+            "NEW_TASK",
+            f"Adding to project: '{project_name}', Must select: {must_select_project}, Date: {effective_date}",
+        )
+        new_task = self.task_manager.add_task(list_to_add, text, project=project_name, effective_date=effective_date)
         entry.set_text("")
         self.refresh_task_list()
         self.refresh_sidebar()
+
+        if must_select_project and new_task:
+            self.show_task_info_panel(new_task)
+            self.show_toast(_("Please select a project for the new task"))
+
         debug.log_event("NEW_TASK", "New task created successfully")

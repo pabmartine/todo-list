@@ -10,6 +10,7 @@ from ..core.debug import debug, debug_method
 from ..core.i18n import setup_locale, translate as _
 from ..services.project_service import ProjectService
 from ..services.task_service import TaskService as TaskManager
+from .kanban import KanbanMixin
 from .projects import ProjectMixin
 from .sidebar import SidebarMixin
 from .support import WindowAppearanceMixin, WindowDataActionsMixin, WindowLifecycleMixin
@@ -19,6 +20,7 @@ from .task_list import TaskListMixin
 
 class TaskManagerWindow(
     SidebarMixin,
+    KanbanMixin,
     ProjectMixin,
     TaskDetailMixin,
     TaskListMixin,
@@ -37,6 +39,7 @@ class TaskManagerWindow(
         self.project_service = ProjectService(self.task_manager)
         self.current_language = self.config.get("language", "auto")
         self.current_list = self.config.get("current_list", "today")
+        self.current_view = self.config.get("current_view", "list")
         self.search_query = ""
         self.sort_ascending = False
         self.current_task_info = None
@@ -155,7 +158,7 @@ class TaskManagerWindow(
         self.set_content(self.toast_overlay)
 
         self.setup_breakpoints()
-        self.refresh_task_list()
+        self.set_active_view(self.current_view)
         debug.log_event("UI", "Main UI setup completed")
 
     def setup_breakpoints(self):

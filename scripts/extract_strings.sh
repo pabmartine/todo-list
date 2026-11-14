@@ -16,7 +16,7 @@ xgettext --language=Python \
          --add-comments \
          --copyright-holder="pabmartine" \
          --package-name="Todo List" \
-         --package-version="1.4.0" \
+         --package-version="1.5.0" \
          --files-from="$TEMP_FILE"
 
 echo "Archivo .pot generado en locale/todo-list.pot"

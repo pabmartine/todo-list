@@ -165,3 +165,69 @@ class TaskServiceTest(unittest.TestCase):
         self.assertEqual(self.service.tasks["all_tasks"][0]["list_id"], "today")
         self.assertFalse(self.service.tasks["all_tasks"][0]["favorite"])
         self.assertEqual(self.service.get_inbox_project()["id"], "inbox")
+
+    def test_add_task_returns_created_task(self):
+        created = self.service.add_task("all", "New test task", project="Work")
+        self.assertIsNotNone(created)
+        self.assertEqual(created["title"], "New test task")
+        self.assertEqual(created["project"], "Work")
+        self.assertEqual(self.service.find_task(created["id"])["project"], "Work")
+
+    def test_add_task_defaults_to_inbox_when_project_is_none(self):
+        inbox_name = self.service.get_inbox_project()["name"]
+        created = self.service.add_task("today", "Inbox task", project=None)
+        self.assertEqual(created["project"], inbox_name)
+
+    def test_add_task_allows_empty_project_for_forced_selection(self):
+        created = self.service.add_task("today", "Pending project task", project="")
+        self.assertEqual(created["project"], "")
+
+    def test_task_status_lifecycle_and_synchronization(self):
+        created = self.service.add_task("all", "Lifecycle task", project="Work")
+        self.assertEqual(created["status"], "pending")
+        self.assertFalse(created["completed"])
+
+        updated = self.service.update_task(created["id"], status="in_progress")
+        self.assertEqual(updated["status"], "in_progress")
+        self.assertFalse(updated["completed"])
+
+        updated = self.service.update_task(created["id"], status="completed")
+        self.assertEqual(updated["status"], "completed")
+        self.assertTrue(updated["completed"])
+
+        updated = self.service.update_task(created["id"], completed=False)
+        self.assertEqual(updated["status"], "pending")
+        self.assertFalse(updated["completed"])
+
+        toggled = self.service.toggle_task_completed(created["id"])
+        self.assertEqual(toggled["status"], "completed")
+        self.assertTrue(toggled["completed"])
+
+        toggled = self.service.toggle_task_completed(created["id"])
+        self.assertEqual(toggled["status"], "pending")
+        self.assertFalse(toggled["completed"])
+
+    def test_get_kanban_tasks_and_move(self):
+        t1 = self.service.add_task("all", "Task 1", project="Work", status="pending")
+        t2 = self.service.add_task("all", "Task 2", project="Work", status="in_progress")
+        t3 = self.service.add_task("all", "Task 3", project="Work", status="completed")
+
+        kanban_data = self.service.get_kanban_tasks("project_work")
+        self.assertIn(t1["id"], [t["id"] for t in kanban_data["pending"]])
+        self.assertIn(t2["id"], [t["id"] for t in kanban_data["in_progress"]])
+        self.assertIn(t3["id"], [t["id"] for t in kanban_data["completed"]])
+
+        # Search query
+        filtered = self.service.get_kanban_tasks("project_work", query="Task 2")
+        self.assertEqual(len(filtered["pending"]), 0)
+        self.assertEqual(len(filtered["in_progress"]), 1)
+        self.assertEqual(filtered["in_progress"][0]["id"], t2["id"])
+
+        # Move task kanban
+        moved = self.service.move_task_kanban(t1["id"], "in_progress")
+        self.assertEqual(moved["status"], "in_progress")
+        self.assertFalse(moved["completed"])
+
+        kanban_data_after = self.service.get_kanban_tasks("project_work")
+        self.assertNotIn(t1["id"], [t["id"] for t in kanban_data_after["pending"]])
+        self.assertIn(t1["id"], [t["id"] for t in kanban_data_after["in_progress"]])

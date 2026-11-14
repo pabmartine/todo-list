@@ -1,6 +1,6 @@
 import datetime
 
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, GLib, Gtk
 
 from ..core.debug import debug, debug_method
 from ..core.i18n import translate as _
@@ -46,6 +46,19 @@ class TaskDetailMixin:
         debug.log_event("UI", "Task info panel created successfully")
         return self.detail_toolbar
 
+    def is_project_selection_pending(self):
+        return (
+            self.current_task_info is not None
+            and not (self.current_task_info.get("project") or "").strip()
+            and hasattr(self, "detail_split")
+            and self.detail_split.get_show_sidebar()
+        )
+
+    def highlight_project_requirement(self):
+        if hasattr(self, "task_project_row") and self.task_project_row:
+            self.task_project_row.add_css_class("error")
+            self.task_project_row.grab_focus()
+
     @debug_method("on_task_row_activated")
     def on_task_row_activated(self, listbox, row):
         if row is None:
@@ -68,6 +81,11 @@ class TaskDetailMixin:
 
         found_task = self.task_manager.find_task(task_id)
         if found_task:
+            if self.is_project_selection_pending():
+                if self.current_task_info and self.current_task_info.get("id") != task_id:
+                    self.show_toast(_("Please select a project for the task first"))
+                    self.highlight_project_requirement()
+                    return
             debug.log_event(
                 "TASK_CLICK",
                 f"Found task: '{found_task.get('title', 'unknown')}' (ID: {found_task.get('id', 'unknown')})",
@@ -99,6 +117,8 @@ class TaskDetailMixin:
             self._build_actions_group(task)
 
             self.detail_split.set_show_sidebar(True)
+            if hasattr(self, "update_task_list_selection"):
+                self.update_task_list_selection()
             debug.log_event("TASK_INFO", "Task info panel shown successfully")
         except Exception as exc:
             debug.log_event("TASK_INFO", f"ERROR in show_task_info_panel: {exc}", stack_info=True)
@@ -167,21 +187,41 @@ class TaskDetailMixin:
 
     def _build_organization_group(self, task):
         project_group = Adw.PreferencesGroup(title=_("Organization"))
-        project_row = Adw.ComboRow(title=_("Project"))
+        self.task_project_row = Adw.ComboRow(title=_("Project"))
 
         inbox_project = self.task_manager.get_inbox_project()
         inbox_name = inbox_project["name"] if inbox_project else _("Inbox")
         project_names = [inbox_name] + [p["name"] for p in self.task_manager.projects if p.get("id") != "inbox"]
 
-        project_row.set_model(Gtk.StringList.new(project_names))
-        current_project = task.get("project", inbox_name)
-        try:
-            project_row.set_selected(project_names.index(current_project))
-        except ValueError:
-            project_row.set_selected(0)
+        current_project = (task.get("project") or "").strip()
+        self._project_placeholder = _("Select a project…")
 
-        project_row.connect("notify::selected", self.on_project_changed_enhanced)
-        project_group.add(project_row)
+        if not current_project or current_project not in project_names:
+            combo_items = [self._project_placeholder] + project_names
+            self.task_project_row.set_model(Gtk.StringList.new(combo_items))
+            self.task_project_row.set_selected(0)
+            self.task_project_row.add_css_class("error")
+            self.task_project_row.set_subtitle(_("Selection required"))
+            GLib.idle_add(self.task_project_row.grab_focus)
+        else:
+            self.task_project_row.set_model(Gtk.StringList.new(project_names))
+            self.task_project_row.set_selected(project_names.index(current_project))
+
+        self.task_project_row.connect("notify::selected", self.on_project_changed_enhanced)
+        project_group.add(self.task_project_row)
+
+        self.task_status_row = Adw.ComboRow(title=_("Status"))
+        status_labels = [_("Pending"), _("In progress"), _("Completed")]
+        self.task_status_row.set_model(Gtk.StringList.new(status_labels))
+        current_status = task.get("status")
+        if not current_status:
+            current_status = "completed" if task.get("completed", False) else "pending"
+        status_keys = ["pending", "in_progress", "completed"]
+        status_idx = status_keys.index(current_status) if current_status in status_keys else 0
+        self.task_status_row.set_selected(status_idx)
+        self.task_status_row.connect("notify::selected", self.on_status_changed)
+        project_group.add(self.task_status_row)
+
         self.task_info_content.append(project_group)
 
     def _build_subtasks_group(self, task):
@@ -200,9 +240,9 @@ class TaskDetailMixin:
     def _build_actions_group(self, task):
         actions_group = Adw.PreferencesGroup(title=_("Actions"))
 
-        completed_row = Adw.SwitchRow(title=_("Completed"), active=task["completed"])
-        completed_row.connect("notify::active", self.on_task_completed_toggled)
-        actions_group.add(completed_row)
+        self.task_completed_row = Adw.SwitchRow(title=_("Completed"), active=task["completed"])
+        self.task_completed_row.connect("notify::active", self.on_task_completed_toggled)
+        actions_group.add(self.task_completed_row)
 
         delete_row = Adw.ActionRow(title=_("Delete task"))
         delete_button = Gtk.Button(label=_("Delete"), valign=Gtk.Align.CENTER)
@@ -487,25 +527,42 @@ class TaskDetailMixin:
 
         selected_idx = row.get_selected()
         model = row.get_model()
-        if selected_idx >= model.get_n_items():
+        if not model or selected_idx >= model.get_n_items():
             return
 
-        project_name = model.get_string(selected_idx)
-        debug.log_event("PROJECT_CHANGE", f"Changed to project: {project_name}")
-        updated_task = self.task_manager.update_task(self.current_task_info.get("id"), project=project_name)
+        selected_text = model.get_string(selected_idx)
+        placeholder = getattr(self, "_project_placeholder", _("Select a project…"))
+        if selected_text == placeholder:
+            row.add_css_class("error")
+            row.set_subtitle(_("Selection required"))
+            return
+
+        row.remove_css_class("error")
+        row.set_subtitle("")
+
+        debug.log_event("PROJECT_CHANGE", f"Changed to project: {selected_text}")
+        updated_task = self.task_manager.update_task(self.current_task_info.get("id"), project=selected_text)
         if updated_task:
             self.current_task_info = updated_task
             self.refresh_task_list()
             self.refresh_sidebar()
+            self.show_toast(_("Assigned to “{}”").format(selected_text))
 
-    def close_task_details(self):
+    def close_task_details(self, force=False):
         """Hide the details panel, if it is showing."""
         if not hasattr(self, "detail_split"):
-            return
+            return False
+        if not force and self.is_project_selection_pending():
+            self.show_toast(_("Please select a project for the task first"))
+            self.highlight_project_requirement()
+            return False
         if self.detail_split.get_show_sidebar():
             debug.log_event("TASK_INFO", "Closing task info panel")
             self.detail_split.set_show_sidebar(False)
         self.current_task_info = None
+        if hasattr(self, "update_task_list_selection"):
+            self.update_task_list_selection()
+        return True
 
     @debug_method("on_close_task_info")
     def on_close_task_info(self, button=None):
@@ -534,6 +591,25 @@ class TaskDetailMixin:
         if updated_task:
             self.current_task_info = updated_task
 
+    def on_status_changed(self, row, param):
+        if not self.current_task_info:
+            return
+        selected_idx = row.get_selected()
+        status_keys = ["pending", "in_progress", "completed"]
+        if 0 <= selected_idx < len(status_keys):
+            new_status = status_keys[selected_idx]
+            if self.current_task_info.get("status") != new_status:
+                updated_task = self.task_manager.update_task(
+                    self.current_task_info.get("id"),
+                    status=new_status,
+                )
+                if updated_task:
+                    self.current_task_info = updated_task
+                    if hasattr(self, "task_completed_row"):
+                        self.task_completed_row.set_active(updated_task.get("completed", False))
+                    self.refresh_task_list()
+                    self.refresh_sidebar()
+
     def on_task_completed_toggled(self, switch, param):
         debug.log_event("TASK_EDIT", f"Task completed toggled to: {switch.get_active()}")
         if self.current_task_info and self.current_task_info["completed"] != switch.get_active():
@@ -543,6 +619,11 @@ class TaskDetailMixin:
             )
             if updated_task:
                 self.current_task_info = updated_task
+                if hasattr(self, "task_status_row"):
+                    status_keys = ["pending", "in_progress", "completed"]
+                    cur_status = updated_task.get("status", "pending")
+                    if cur_status in status_keys:
+                        self.task_status_row.set_selected(status_keys.index(cur_status))
                 self.refresh_task_list()
                 self.refresh_sidebar()
 
@@ -565,7 +646,7 @@ class TaskDetailMixin:
             return
 
         debug.log_event("TASK_DELETE", "Task deleted successfully")
-        self.close_task_details()
+        self.close_task_details(force=True)
         self.refresh_task_list()
         self.refresh_sidebar()
 

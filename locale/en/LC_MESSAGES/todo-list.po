@@ -1,10 +1,10 @@
-# English translation for Task Manager
-# Copyright (C) 2025
-# This file is distributed under the same license as the Task Manager package.
+# English translation for Todo List
+# Copyright (C) 2025-2026 pabmartine
+# This file is distributed under the same license as the Todo List package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Task Manager 1.0.0\n"
+"Project-Id-Version: Todo List 1.5.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-27 08:02+0200\n"
 "PO-Revision-Date: 2025-01-01 12:00+0000\n"
@@ -637,6 +637,54 @@ msgstr "“{}” added to Favorites"
 #: /home/pablo/Escritorio/todo-list/src/todo_list/ui/task_list.py:445
 msgid "“{}” removed from Favorites"
 msgstr "“{}” removed from Favorites"
+
+msgid "Select a project…"
+msgstr "Select a project…"
+
+msgid "Selection required"
+msgstr "Selection required"
+
+msgid "Please select a project for the task first"
+msgstr "Please select a project for the task first"
+
+msgid "Please select a project for the new task"
+msgstr "Please select a project for the new task"
+
+msgid "Please select a project for the current task first"
+msgstr "Please select a project for the current task first"
+
+msgid "Assigned to “{}”"
+msgstr "Assigned to “{}”"
+
+msgid "No project"
+msgstr "No project"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Pending"
+msgstr "Pending"
+
+msgid "In progress"
+msgstr "In progress"
+
+msgid "List view"
+msgstr "List view"
+
+msgid "Kanban view"
+msgstr "Kanban view"
+
+msgid "Drag to move"
+msgstr "Drag to move"
+
+msgid "“{}” moved to {}"
+msgstr "“{}” moved to {}"
+
+msgid "Mark as incomplete"
+msgstr "Mark as incomplete"
+
+msgid "No tasks"
+msgstr "No tasks"
 
 #~ msgid "day"
 #~ msgstr "day"
