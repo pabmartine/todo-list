@@ -2,22 +2,26 @@
 
 Task manager for GNOME built with Python, GTK 4 and libadwaita.
 
-![Todo List Screenshot](images/snapshot.png)
+![Todo List - List View](images/snapshot.png)
+
+![Todo List - Kanban View](images/kanban.png)
 
 ## Overview
 
 Todo List is a desktop application focused on simple task and project management:
 
-- Create, edit, complete and delete tasks
-- Organize tasks by smart lists: Today, Next 7 days, All, Overdue, Favorites and Archived
-- Manage custom projects with colors
-- Assign dates, notes and favorites to tasks
-- Add subtasks as lightweight checklists inside each task
-- Reorder tasks with drag and drop
-- Search tasks inside the current list
-- Import and export data as JSON
-- Persist data locally in JSON
-- Switch language and theme from the UI
+- **Dual View Modes**: Switch between a structured **List view** and an interactive **Kanban board** with toggle buttons in the header bar.
+- **Interactive Kanban Board**: Visualize and manage tasks across three workflow columns (*Pending*, *In progress*, *Completed*) with drag-and-drop support.
+- **Task Status Lifecycle**: Explicitly track task progress (`pending`, `in_progress`, `completed`) with a status selector in the detail panel or through Kanban column transitions.
+- **Smart Lists**: Automatic filtering by *Today*, *Next 7 days*, *All*, *Overdue*, *Favorites*, and *Archived*.
+- **Project Organization**: Organize tasks into custom color-coded projects, with enforced project assignment to prevent orphaned tasks.
+- **Task Details & Subtasks**: Assign effective dates, notes, and favorite flags. Break complex tasks down with lightweight subtask checklists.
+- **Drag & Drop Reordering**: Reorder tasks in list view and move cards between status columns in Kanban view.
+- **Persistent Selection Highlighting**: Selected tasks remain highlighted across both views while the detail panel is open.
+- **Search**: Fast, real-time search filtering tasks within the current list or board.
+- **Import & Export**: Backup and restore data via standard JSON format through the file chooser portal.
+- **GNOME HIG & Adwaita**: Native look and feel, responsive design with adaptive split view, light/dark/system theme support, and full keyboard shortcuts.
+- **Multilingual**: Interface available in English and Spanish.
 
 ## Requirements
 
@@ -59,17 +63,23 @@ Stored settings include:
 - Style preference (follow system, light or dark)
 - Window size
 - Last selected list
+- Last selected view mode (list or kanban)
 
 ## Project Layout
 
 ```text
 src/todo_list/         Python package
-tests/                 automated tests
-data/                  Desktop file, metainfo and icons
-locale/                gettext catalogs
-scripts/               translation helper scripts
-packaging/flatpak/     Flatpak manifest and build script
-docs/                  functional and technical documentation
+  ├── core/            Constants, configuration, debug and i18n
+  ├── models/          Task and Project data models
+  ├── repositories/    Task persistence and schema migrations
+  ├── services/        Task and Project domain logic
+  └── ui/              GTK 4 and libadwaita views, kanban board, and dialogs
+tests/                 Automated unit and migration tests
+data/                  Desktop file, AppStream metainfo and icons
+locale/                gettext catalogs and translation files
+scripts/               Translation extraction and compilation helper scripts
+packaging/flatpak/     Flatpak manifest and build scripts
+docs/                  Functional and technical documentation
 ```
 
 ## Documentation
@@ -87,11 +97,11 @@ docs/                  functional and technical documentation
 Useful commands:
 
 ```bash
-bash compile_translations.sh
-bash extract_strings.sh
-bash build-flatpak.sh
+bash scripts/compile_translations.sh
+bash scripts/extract_strings.sh
+bash packaging/flatpak/build-flatpak.sh
 PYTHONPATH=src python3 -m unittest discover -s tests -v
-python3 -m py_compile todo-list.py src/todo_list/*.py src/todo_list/models/*.py src/todo_list/repositories/*.py src/todo_list/services/*.py src/todo_list/ui/*.py src/todo_list/ui/support/*.py
+python3 -m py_compile todo-list.py src/todo_list/*.py src/todo_list/core/*.py src/todo_list/models/*.py src/todo_list/repositories/*.py src/todo_list/services/*.py src/todo_list/ui/*.py src/todo_list/ui/support/*.py
 ```
 
 Validation combines `unittest`, `py_compile` and manual GTK checks for UI flows.
